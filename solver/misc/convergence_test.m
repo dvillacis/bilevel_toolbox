@@ -59,7 +59,7 @@ function [stop, crit, s, iter, info] = convergence_test(sol, s, iter, fg, Fp, in
 
   % Handle verbosity
   if param.verbose >= 2
-    switch lower(para.stopping_criterion)
+    switch lower(param.stopping_criterion)
     case 'rel_norm_obj'
       fprintf('  f(x^*) = %e, rel_eval = %e\n', curr_eval, rel_eval);
     case 'rel_norm_primal'

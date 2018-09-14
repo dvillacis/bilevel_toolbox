@@ -64,7 +64,7 @@ function [sol,info] = solvep(x_0, F, param)
   % Main Loop
   while 1
 
-    if para.verbose >= 1
+    if param.verbose >= 1
       fprintf('Iter %.3i: ', iter);
     end
 
