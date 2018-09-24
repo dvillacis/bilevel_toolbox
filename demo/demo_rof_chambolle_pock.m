@@ -14,6 +14,7 @@ dataset = DatasetInFolder('data/circle_dataset_single_gaussian','*_circle_origin
 original = dataset.get_target(1);
 noisy = dataset.get_corrupt(1);
 
+% TODO: Fix the formulation for a saddle point
 %% Setting Lower Level Solver
 f2.grad = @(u) u - noisy;
 f2.eval = @(u) 0.5 * norm(u-noisy)^2;
