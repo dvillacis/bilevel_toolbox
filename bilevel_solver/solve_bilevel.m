@@ -1,4 +1,4 @@
-function [sol,info] = solve_bilevel(x_0, lower_level_problem, upper_level_problem, param)
+function [sol,info] = solve_bilevel(x_0, dataset, lower_level_problem, upper_level_problem, param)
 
   % Start the counter
   t1 = tic;
@@ -15,17 +15,20 @@ function [sol,info] = solve_bilevel(x_0, lower_level_problem, upper_level_proble
   if ~isfield(param, 'tol'), param.tol=1e-4 ; end
   if ~isfield(param, 'maxit'), param.maxit=200; end
   if ~isfield(param, 'verbose'), param.verbose=1 ; end
-  if ~isfield(param, 'lambda'), param.lambda=0.99 ; end
-  if ~isfield(param, 'fast_eval'), param.fast_eval = 0  ; end
-  if ~isfield(param, 'debug_mode'), param.debug_mode = 0 ; end
 
   % TODO: test for lower level correctness
+
+
+  % Select the stopping criterion
+  if ~isfield(param, 'stopping_criterion')
+    param.stopping_criterion = bilevel_select_stopping_criterion(param.algo);
+  end
 
   % TODO: Setup algorithm selection strategy
   algo = get_bilevel_algo(param.algo);
 
   % Initialization
-  [sol,s,param] = algo.initialize(x_0,lower_level_problem,upper_level_problem,param);
+  [sol,s,param] = algo.initialize(x_0,dataset,lower_level_problem,upper_level_problem,param);
   [info,iter,s] = bilevel_initialize_convergence_variable(sol,s,lower_level_problem,upper_level_problem,param);
 
   % Main Loop
@@ -35,7 +38,7 @@ function [sol,info] = solve_bilevel(x_0, lower_level_problem, upper_level_proble
       fprintf('Bilevel Iter %.3i: ',iter);
     end
 
-    [sol,s] = algo.algorithm(x_0,lower_level_problem,upper_level_problem,sol,s,param);
+    [sol,s] = algo.algorithm(x_0,dataset,lower_level_problem,upper_level_problem,sol,s,param);
 
     [stop,crit,s,iter,info] = bilevel_convergence_test(sol,s,iter,lower_level_problem,upper_level_problem,info,param);
 
