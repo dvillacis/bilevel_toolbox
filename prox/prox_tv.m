@@ -1,4 +1,4 @@
-function [sol, info] = prox_tv(b, gamma, param)
+function [sol, info] = prox_tv(x, gamma, param)
 %PROX_TV Total variation proximal operator
 %   Usage:  sol=prox_tv(x, gamma)
 %           sol=prox_tv(x, gamma,param)
@@ -92,7 +92,8 @@ end
 
 
 % Initializations
-[r, s] = gradient_op(b*0);
+[r, s] = gradient_op(x*0);
+%[r, s] = gradient_op(b*0);
 pold = r; qold = s;
 told = 1; prev_obj = 0;
 verbose=param.verbose;
@@ -111,11 +112,11 @@ end
 for iter = 1:param.maxit
 
     % Current solution
-    sol = b - gamma*div_op(r, s, wx, wy);
+    sol = x + gamma*div_op(x, r, s);
 
     % Objective function value
-    tmp = gamma * sum(norm_tv(sol, wx, wy));
-    obj = .5*norm(b(:)-sol(:), 2)^2 + tmp;
+    tmp = gamma * sum(norm_tv(sol));
+    obj = .5*norm(x(:)-sol(:), 2)^2 + tmp;
     rel_obj = abs(obj-prev_obj)/obj;
     prev_obj = obj;
 
@@ -129,7 +130,7 @@ for iter = 1:param.maxit
     end
 
     % Udpate divergence vectors and project
-    [dx, dy] = gradient_op(sol, wx, wy);
+    [dx, dy] = gradient_op(sol);
 
     r = r - 1/(8*gamma)/mt^2 * dx;
     s = s - 1/(8*gamma)/mt^2 * dy;

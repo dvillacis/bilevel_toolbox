@@ -20,8 +20,21 @@ function [sol,s,param] = nonsmooth_trust_region_initialize(x_0,dataset,lower_lev
 end
 
 function [sol,s] = nonsmooth_trust_region_algorithm(dataset,lower_level_problem,upper_level_problem,sol,s,param)
+
+  % Load dataset
   original = dataset.get_target(1);
   noisy = dataset.get_corrupt(1);
+
+  % Solving the state equation (lower level solver)
   [lower_sol, lower_info] = lower_level_problem.solve(noisy,sol);
-  sol = 0.2;
+
+  % Get the adjoint state
+  [Kux,Kuy] = gradient_op(lower_sol);
+  Ku = cat(3,Kux,Kuy);
+  nKu = sqrt(Kux.^2+Kuy.^2); % Pixelwise l2 norm of the dual variable Ku
+  Act = (nKu<1e-2);
+  Inact = 1-Act;
+  denominador = Inact.*nKu+Act;
+  prodKuKu = outer_product(Ku./(denominador.^3),Ku);
+
 end

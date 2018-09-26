@@ -1,13 +1,10 @@
-function I = div_op(dx, dy, wx, wy)
+function I = div_op(x, dx, dy)
 %DIV_OP Divergence operator in 2 dimensions
 %   Usage:  I = div_op(dx, dy)
-%           I = div_op(dx, dy, wx, wy)
 %
 %   Input parameters:
 %         dx    : Gradient along x
 %         dy    : Gradient along y
-%         wx    : Weights along x
-%         wy    : Weights along y
 %
 %   Output parameters:
 %         I     : Output divergence image
@@ -22,21 +19,9 @@ function I = div_op(dx, dy, wx, wy)
 %
 %   .. math:: \text{div} = - \nabla^*
 %
-%   See also: gradient_op div_op3d div_op1d laplacian_op prox_tv
-
-% Author: Nathanael Perraudin
-% Date:   1 February 2014
-
-if nargin > 2
-    dx = dx .* conj(wx);
-    dy = dy .* conj(wy);
-end
-
-I = [dx(1, :,:) ; ...
-    dx(2:end-1, :,:)-dx(1:end-2, :,:) ;...
-    -dx(end-1, :,:)];
-I = I + [dy(:, 1,:) ,...
-    dy(:, 2:end-1,:)-dy(:, 1:end-2,:) ,...
-    -dy(:, end-1,:)];
+    [M,N] = size(x);
+    G = gradient_matrix(M,N);
+    I = G'*[dx;dy];
+    I = reshape(I,M,N);
 
 end
