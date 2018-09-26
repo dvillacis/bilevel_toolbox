@@ -81,7 +81,7 @@ if ~isfield(param, 'weights'), param.weights = [1, 1]; end
 
 % Test of gamma
 if test_gamma(gamma)
-    sol = b;
+    sol = x;
     info.algo=mfilename;
     info.iter=0;
     info.final_eval=0;
@@ -112,7 +112,7 @@ end
 for iter = 1:param.maxit
 
     % Current solution
-    sol = x + gamma*div_op(x, r, s);
+    sol = x - gamma*div_op(x, r, s);
 
     % Objective function value
     tmp = gamma * sum(norm_tv(sol));

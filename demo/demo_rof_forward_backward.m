@@ -23,7 +23,7 @@ f2.eval = @(u) 0.5 * norm(u-noisy)^2;
 f2.beta = 1;
 
 param_tv.verbose = verbose - 1;
-alpha = 0.9;
+alpha = 0.1;
 f1.prox = @(u,T) prox_tv(u,alpha*T,param_tv);
 f1.eval = @(u) alpha*norm_tv(u);
 

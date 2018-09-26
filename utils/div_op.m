@@ -21,7 +21,7 @@ function I = div_op(x, dx, dy)
 %
     [M,N] = size(x);
     G = gradient_matrix(M,N);
-    I = G'*[dx;dy];
+    I = -G'*[dx;dy];
     I = reshape(I,M,N);
 
 end
