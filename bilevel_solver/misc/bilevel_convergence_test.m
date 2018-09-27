@@ -1,4 +1,4 @@
-function [stop, crit, s, iter, info] = bilevel_convergence_test(sol, s, iter, lower_level_problem, upper_level_problem)
+function [stop, crit, s, iter, info] = bilevel_convergence_test(sol, s, iter, lower_level_problem, upper_level_problem,info,param)
 
   stop = 0;
   crit = 'NOT DEFINED';
@@ -27,23 +27,28 @@ function [stop, crit, s, iter, info] = bilevel_convergence_test(sol, s, iter, lo
         crit = 'OBJ_THRESHOLD';
         stop = 1;
       end
+    case 'radius_threshold'
+      if s.radius < param.tol
+        crit = 'RADIUS_THRESHOLD';
+        stop = 1;
+      end
     otherwise
       error('Unknown stopping criterion!');
   end
 
   % Handle verbosity
-  if param.verbose >= 2
-    switch lower(param.stopping_criterion)
-    case 'rel_norm_obj'
-      fprintf('  f(x^*) = %e, rel_eval = %e\n', curr_eval, rel_eval);
-    case 'obj_increase'
-      fprintf('  f(x^*) = %e, prev_it:  %e\n', curr_eval, info.objective(iter));
-    case 'obj_threshold'
-      fprintf('  f(x^*) = %e\n', curr_eval);
-    otherwise
-      error('Unknown stopping criterion!');
-    end
-  end
+%   if param.verbose >= 2
+%     switch lower(param.stopping_criterion)
+%     case 'rel_norm_obj'
+%       fprintf('  f(x^*) = %e, rel_eval = %e\n', curr_eval, rel_eval);
+%     case 'obj_increase'
+%       fprintf('  f(x^*) = %e, prev_it:  %e\n', curr_eval, info.objective(iter));
+%     case 'obj_threshold'
+%       fprintf('  f(x^*) = %e\n', curr_eval);
+%     otherwise
+%       error('Unknown stopping criterion!');
+%     end
+%   end
 
   % Stopping if too many iterations
   if iter >= param.maxit

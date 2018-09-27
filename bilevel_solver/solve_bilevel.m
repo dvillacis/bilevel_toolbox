@@ -42,7 +42,7 @@ function [sol,info] = solve_bilevel(x_0, dataset, lower_level_problem, upper_lev
 
     [stop,crit,s,iter,info] = bilevel_convergence_test(sol,s,iter,lower_level_problem,upper_level_problem,info,param);
 
-    [sol,param] = bilevel_post_process(sol,iter,info,param);
+%     [sol,param] = bilevel_post_process(sol,iter,info,param);
 
     if stop, break; end
 

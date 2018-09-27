@@ -9,6 +9,7 @@ function [sol,s,param] = nonsmooth_trust_region_initialize(x_0,dataset,lower_lev
 
   s.x_n = {};
   sol = x_0;
+  s.radius = param.radius;
 
   % Test if lower level problem has a solve method
   if ~isfield(lower_level_problem, 'solve')
@@ -26,10 +27,52 @@ function [sol,s] = nonsmooth_trust_region_algorithm(dataset,lower_level_problem,
   noisy = dataset.get_corrupt(1);
 
   % Solving the state equation (lower level solver)
-  [lower_sol, ~] = lower_level_problem.solve(noisy,sol);
+  [u, ~] = lower_level_problem.solve(noisy,sol);
 
   % Solving the adjoint state
-  [p,grad] = adjoint_solver(lower_sol,original,sol);
+  [~,grad] = adjoint_solver(u,original,sol);
+
+  cost = upper_level_problem.f1.eval(u,original);
+
+  hess = 0;
+
+  % Step calculation
+  sn = -hess\grad;
+  predn = -grad'*sn-0.5*sn'*hess*sn;
+  if grad'*hess*grad <= 0
+    t = s.radius/norm(grad);
+  else
+    t = min(norm(grad).^2/(grad'*hess*grad),s.radius/(norm(grad)));
+  end
+  sc = -t*grad;
+  predc = -grad'*sc-0.5*sc'*hess*sc;
+
+  % Step Selection
+  if norm(sn)<=s.radius && predn >= 0.8*predc
+    step = sn;
+  else
+    step = sc;
+  end
+
+  % Trust Region Modification
+  pred = -grad'*step-0.5*step'*hess*step;
+  [next_u, ~] = lower_level_problem.solve(noisy,sol+step);
+  next_cost = upper_level_problem.f1.eval(next_u,original);
+  ared = cost-next_cost;
+  rho = ared/pred;
+
+  % Change size of the region
+  if rho > param.eta2
+    sol = sol + step;
+    s.radius = param.gamma2*s.radius;
+  elseif rho <= param.eta1
+    s.radius = param.gamma1*s.radius;
+  else
+    sol = sol + step;
+    s.radius = param.gamma1*s.radius;
+  end
+
+  fprintf('alpha = %f, grad = %f, radius = %f, rho = %f\n',sol,grad,s.radius,rho);
 
 end
 

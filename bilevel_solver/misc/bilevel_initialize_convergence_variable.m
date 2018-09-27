@@ -11,6 +11,8 @@ function [info, iter, s] = bilevel_initialize_convergence_variable(sol, s, lower
     case 'obj_threshold'
       info.objective = nan(param.maxit+1,1);
       % info.objective(1) = eval_function(fg, Fp, sol, s, param);
+    case 'radius_threshold'
+      info.objective = nan(param.maxit+1,1);
     otherwise
       error('Unknown stopping criterion!');
   end
