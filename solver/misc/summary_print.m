@@ -23,7 +23,8 @@ function [] = summary_print(s, info, iter, algo, crit, param)
 
     % Stopping criterion
     fprintf(' %i iterations\n', iter);
-    fprintf(' Stopping criterion: %s \n\n', crit);
+    fprintf(' Stopping criterion: %s \n', crit);
+    fprintf(' Execution Time: %f \n\n', info.time);
 
   elseif param.verbose >= 1
     switch lower(param.stopping_criterion)

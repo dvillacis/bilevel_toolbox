@@ -1,4 +1,4 @@
-function [sol,info] = solve_bilevel(x_0, dataset, lower_level_problem, upper_level_problem, param)
+function [sol,info] = solve_bilevel(x_0, lower_level_problem, upper_level_problem, param)
 
   % Start the counter
   t1 = tic;
@@ -28,7 +28,7 @@ function [sol,info] = solve_bilevel(x_0, dataset, lower_level_problem, upper_lev
   algo = get_bilevel_algo(param.algo);
 
   % Initialization
-  [sol,s,param] = algo.initialize(x_0,dataset,lower_level_problem,upper_level_problem,param);
+  [sol,s,param] = algo.initialize(x_0,lower_level_problem,upper_level_problem,param);
   [info,iter,s] = bilevel_initialize_convergence_variable(sol,s,lower_level_problem,upper_level_problem,param);
 
   % Main Loop
@@ -38,11 +38,11 @@ function [sol,info] = solve_bilevel(x_0, dataset, lower_level_problem, upper_lev
       fprintf('Bilevel Iter %.3i: ',iter);
     end
 
-    [sol,s] = algo.algorithm(x_0,dataset,lower_level_problem,upper_level_problem,sol,s,param);
+    [sol,s] = algo.algorithm(x_0,lower_level_problem,upper_level_problem,sol,s,param);
 
     [stop,crit,s,iter,info] = bilevel_convergence_test(sol,s,iter,lower_level_problem,upper_level_problem,info,param);
 
-%     [sol,param] = bilevel_post_process(sol,iter,info,param);
+    % [sol,param] = bilevel_post_process(sol,iter,info,param);
 
     if stop, break; end
 
@@ -50,12 +50,12 @@ function [sol,info] = solve_bilevel(x_0, dataset, lower_level_problem, upper_lev
 
   sol = algo.finalize(x_0,lower_level_problem,upper_level_problem,sol,s,param);
 
-  summary_print(s,info,iter,algo,crit,param);
-
   info.algo = algo.name;
   info.iter = iter;
   info.crit = crit;
   info.time = toc(t1);
+
+  summary_print(s,info,iter,algo,crit,param);
 
 end
 
