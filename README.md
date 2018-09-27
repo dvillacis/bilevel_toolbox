@@ -1,6 +1,8 @@
 # Bilevel Toolbox
-## Introduction
 This is a MATLAB Toolbox designed to test different bilevel optimization problems of the form $$ \min_u J(y,u)$$
+
+## Installation
+To use the toolbox, please execute the script `init_bilevel_toolbox.m` to place all the required scripts into the MATLAB path.
 
 ## Lower Level Problem
 In order to define the lower level problem, we need to create a struct that contains the following methods: SOLVE and EVAL
