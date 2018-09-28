@@ -12,7 +12,7 @@ function [sol,s,param] = nonsmooth_trust_region_initialize(x_0,lower_level_probl
   s.radius = param.radius;
   s.hess = 0;
   s.yold = lower_level_problem.solve(sol);
-  s.gradold = upper_level_problem.adjoint(s.yold,sol,upper_level_problem.param.zd, upper_level_problem.param.alpha);
+  s.gradold = upper_level_problem.adjoint(s.yold,sol);
 
   % Test if lower level problem has a solve method
   if ~isfield(lower_level_problem, 'solve')
@@ -31,10 +31,10 @@ function [sol,s] = nonsmooth_trust_region_algorithm(lower_level_problem,upper_le
   y = lower_level_problem.solve(sol);
 
   % Solving the adjoint state
-  s.grad = upper_level_problem.adjoint(y,sol,upper_level_problem.param.zd, upper_level_problem.param.alpha);
+  s.grad = upper_level_problem.adjoint(y,sol);
 
   % Getting current cost
-  cost = upper_level_problem.eval(y,sol,upper_level_problem.param.zd, upper_level_problem.param.alpha);
+  cost = upper_level_problem.eval(y,sol);
 
   % Get BFGS Matrix
   % dy = y-s.yold;
@@ -44,8 +44,8 @@ function [sol,s] = nonsmooth_trust_region_algorithm(lower_level_problem,upper_le
   %   s.hess = bfgs(s.hess,dgrad,dy);
   % end
 
-  % Trust Region Step Calculation
-  step = tr_step(s.grad,s.hess,s.radius);
+  % Trust Region Step Calculation (Solving TR Subproblem)
+  step = tr_subproblem(s.grad,s.hess,s.radius);
 
   % Record previous step
   s.yold = y;
@@ -54,7 +54,7 @@ function [sol,s] = nonsmooth_trust_region_algorithm(lower_level_problem,upper_le
   % Trust Region Modification
   pred = -s.grad'*step-0.5*step'*s.hess*step;
   next_y = lower_level_problem.solve(sol+step);
-  next_cost = upper_level_problem.eval(next_y,sol+step,upper_level_problem.param.zd, upper_level_problem.param.alpha);
+  next_cost = upper_level_problem.eval(next_y,sol+step);
   ared = cost-next_cost;
   rho = ared/pred;
 
@@ -69,11 +69,11 @@ function [sol,s] = nonsmooth_trust_region_algorithm(lower_level_problem,upper_le
     s.radius = param.gamma1*s.radius;
   end
 
-  fprintf('sol = %f, grad = %f, radius = %f, rho = %f\n',sol,s.grad,s.radius,rho);
+  fprintf('sol = %f, grad = %f, radius = %f, rho = %f, y = %f, q = %f\n',sol,s.grad,s.radius,rho,y,sol-2*y);
 
 end
 
-function step = tr_step(grad,hess,radius)
+function step = tr_subproblem(grad,hess,radius)
   % Step calculation
   sn = -hess\grad;
   predn = -grad'*sn-0.5*sn'*hess*sn;
