@@ -31,15 +31,9 @@ hold on;
 % Define bilevel parameters
 bilevel_param.verbose = 2;
 bilevel_param.maxit = 1000;
-<<<<<<< HEAD
-bilevel_param.tol = 1e-3;
-bilevel_param.algo = 'NONSMOOTH_TRUST_REGION';
-bilevel_param.radius = 100;
-=======
 bilevel_param.tol = 1e-4;
 bilevel_param.algo = 'NONSMOOTH_TRUST_REGION';
 bilevel_param.radius = 1;
->>>>>>> 5de86d8098604d4d3b4edc09af0d7524d5383d99
 bilevel_param.minradius = 0.01;
 bilevel_param.gamma1 = 0.5;
 bilevel_param.gamma2 = 1.5;
