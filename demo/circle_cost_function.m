@@ -17,7 +17,7 @@ noisy = dataset.get_corrupt(1);
 lower_level_problem.solve = @(noisy,alpha) solve_rof_single_gaussian_lower_level(noisy,alpha);
 
 c = [];
-r = 0.01:0.01:0.15;
+r = 0.01:0.005:0.15;
 
 for a = r
     [sol,info] = lower_level_problem.solve(noisy,a);
