@@ -101,6 +101,29 @@ function B = bfgs(B,y,s)
   B = B + alpha*u - beta*v;
 end
 
+function A = constraints_matrix(grad)
+  [m,n] = size(grad);
+  A1 = [-ones(m,1) grad];
+  A2 = [zeros(n,1) eye(n)];
+  A3 = [zeros(n,1) -eye(n)];
+  A = [A1;A2;A3];
+end
+
+function [xi,step] = tr_subproblem_complex(grad,radius)
+  [m,n] = size(grad);
+  c = [1;zeros(n,1)];
+  b = [zeros(m,1);radius*ones(2*n,1)];
+  A = constraints_matrix(grad);
+  linsol = linprog(c,A,b);
+  xi = linsol(1);
+  step = linsol(2:end);
+end
+
+function xi = tr_complex_stationarity_measure(grad)
+  [xi, ~] = tr_subproblem_complex(grad,1);
+  xi = -xi;
+end
+
 % function nXi = xi(p,m,n)
 %   p = reshape(p,m*n,2);
 %   a = sqrt(sum(p.^2,2));
