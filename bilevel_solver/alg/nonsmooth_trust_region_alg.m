@@ -83,6 +83,7 @@ function [sol,s] = nonsmooth_trust_region_algorithm(lower_level_problem,upper_le
     fprintf('sol = %f, grad = %f, radius = %f, rho = %f, step = %f, y = %f, q = %f\n',sol,s.grad,s.radius,rho,step,y,upper_level_problem.slack(y,sol));
 
   else
+    slack = upper_level_problem.slack(y,sol);
     grad = [0.4*sol;0.5*(y-1)+0.4*sol];
 
     [xi,step] = tr_subproblem_complex(grad,s.radius);
