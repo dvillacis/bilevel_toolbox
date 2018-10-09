@@ -14,6 +14,11 @@ function [sol,s,param] = nonsmooth_trust_region_initialize(x_0,lower_level_probl
   s.yold = lower_level_problem.solve(sol);
   s.gradold = upper_level_problem.adjoint(s.yold,sol);
 
+  % Test if the min radius is defined
+  if ~isfield(param,'minradius')
+    param.minradius = 1e-4;
+  end
+
   % Test if lower level problem has a solve method
   if ~isfield(lower_level_problem, 'solve')
     error('Lower Level Problem struct does not provide a SOLVE method.')
@@ -36,40 +41,72 @@ function [sol,s] = nonsmooth_trust_region_algorithm(lower_level_problem,upper_le
   % Getting current cost
   cost = upper_level_problem.eval(y,sol);
 
-  % Get BFGS Matrix
-  % dy = y-s.yold;
-  % %tt = hess*dy;
-  % dgrad = s.grad-s.gradold;
-  % if norm(y-s.yold) ~= 0
-  %   s.hess = bfgs(s.hess,dgrad,dy);
-  % end
+  if s.radius >= param.minradius
+    % Get BFGS Matrix
+    % dy = y-s.yold;
+    % %tt = hess*dy;
+    % dgrad = s.grad-s.gradold;
+    % if norm(y-s.yold) ~= 0
+    %   s.hess = bfgs(s.hess,dgrad,dy);
+    % end
 
-  % Trust Region Step Calculation (Solving TR Subproblem)
-  step = tr_subproblem(s.grad,s.hess,s.radius);
+    % Trust Region Step Calculation (Solving TR Subproblem)
+    step = tr_subproblem(s.grad,s.hess,s.radius);
 
-  % Record previous step
-  s.yold = y;
-  s.gradold = s.grad;
+    % Record previous step
+    s.yold = y;
+    s.gradold = s.grad;
 
-  % Trust Region Modification
-  pred = -s.grad'*step-0.5*step'*s.hess*step;
-  next_y = lower_level_problem.solve(sol+step);
-  next_cost = upper_level_problem.eval(next_y,sol+step);
-  ared = cost-next_cost;
-  rho = ared/pred;
+    % Trust Region Modification
+    pred = -s.grad'*step-0.5*step'*s.hess*step;
+    next_y = lower_level_problem.solve(sol+step);
+    next_cost = upper_level_problem.eval(next_y,sol+step);
+    ared = cost-next_cost;
+    rho = ared/pred;
 
-  % Change size of the region
-  if rho > param.eta2
-    sol = sol + step;
-    s.radius = param.gamma2*s.radius;
-  elseif rho <= param.eta1
-    s.radius = param.gamma1*s.radius;
+    % Change size of the region
+    if rho > param.eta2
+      sol = sol + step;
+      s.radius = param.gamma2*s.radius;
+    elseif rho <= param.eta1
+      s.radius = param.gamma1*s.radius;
+    else
+      %sol = sol + step;
+      s.radius = param.gamma1*s.radius;
+    end
+
+    fprintf('sol = %f, grad = %f, radius = %f, rho = %f, step = %f, y = %f, q = %f\n',sol,s.grad,s.radius,rho,step,y,sol-2*y);
+
   else
-    %sol = sol + step;
-    s.radius = param.gamma1*s.radius;
-  end
+    grad = [0.4*sol;0.5*(y-1)+0.4*sol];
 
-  fprintf('sol = %f, grad = %f, radius = %f, rho = %f, y = %f, q = %f\n',sol,s.grad,s.radius,rho,y,sol-2*y);
+    [xi,step] = tr_subproblem_complex(grad,s.radius);
+    stationarity = tr_complex_stationarity_measure(grad);
+
+    % Record previous step
+    s.yold = y;
+    s.gradold = s.grad;
+
+    % Trust Region Modification
+    pred = -xi;
+    next_y = lower_level_problem.solve(sol+step);
+    next_cost = upper_level_problem.eval(next_y,sol+step);
+    ared = cost-next_cost;
+    rho = ared/pred;
+
+    % Change size of the region
+    if rho > param.eta2
+      sol = sol + step;
+      s.radius = param.gamma2*s.radius;
+    elseif rho <= param.eta1
+      s.radius = param.gamma1*s.radius;
+    else
+      %sol = sol + step;
+      s.radius = param.gamma1*s.radius;
+    end
+
+    fprintf('sol = %f, grad = %f, radius = %f, rho = %f, step = %f, stat = %f, y = %f , q = %f\n',sol,norm(grad),s.radius,rho,step,stationarity,y, sol-2*y);
+  end
 
 end
 
@@ -110,11 +147,12 @@ function A = constraints_matrix(grad)
 end
 
 function [xi,step] = tr_subproblem_complex(grad,radius)
+  options = optimset('Display','none');
   [m,n] = size(grad);
   c = [1;zeros(n,1)];
   b = [zeros(m,1);radius*ones(2*n,1)];
   A = constraints_matrix(grad);
-  linsol = linprog(c,A,b);
+  linsol = linprog(c,A,b,[],[],[],[],[],options);
   xi = linsol(1);
   step = linsol(2:end);
 end

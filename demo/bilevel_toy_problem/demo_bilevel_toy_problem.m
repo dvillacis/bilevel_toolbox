@@ -38,7 +38,7 @@ bilevel_param.minradius = 0.01;
 bilevel_param.gamma1 = 0.5;
 bilevel_param.gamma2 = 1.5;
 bilevel_param.eta1 = 0.01;
-bilevel_param.eta2 = 0.99;
+bilevel_param.eta2 = 0.93;
 
 % Solve the bilevel problem
 [sol,info] = solve_bilevel(u,lower_level_problem,upper_level_problem,bilevel_param);
