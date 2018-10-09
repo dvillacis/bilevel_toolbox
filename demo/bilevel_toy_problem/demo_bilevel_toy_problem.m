@@ -10,8 +10,10 @@ lower_level_problem.solve = @(u) solve_lower_level(u);
 % Define upper level problem
 zd = 1;
 alpha = 0.4;
+A = 2;
 upper_level_problem.eval = @(y,u) 0.5*norm(y-zd).^2 + 0.5*alpha*norm(u).^2;
 upper_level_problem.adjoint = @(y,u) solve_adjoint_upper_level(y,u,zd,alpha);
+upper_level_problem.slack = @(y,u) u-A*y;
 
 % Initial control
 u = -10;
@@ -34,7 +36,7 @@ bilevel_param.maxit = 1000;
 bilevel_param.tol = 1e-4;
 bilevel_param.algo = 'NONSMOOTH_TRUST_REGION';
 bilevel_param.radius = 1;
-bilevel_param.minradius = 0.01;
+bilevel_param.minradius = 0.1;
 bilevel_param.gamma1 = 0.5;
 bilevel_param.gamma2 = 1.5;
 bilevel_param.eta1 = 0.01;

@@ -28,6 +28,11 @@ function [sol,s,param] = nonsmooth_trust_region_initialize(x_0,lower_level_probl
   if ~isfield(upper_level_problem, 'adjoint')
     error('Upper Level Problem struct does not provide an ADJOINT method.')
   end
+
+  % Test if upper level problem has a slack method
+  if ~isfield(upper_level_problem, 'slack')
+    error('Upper Level Problem struct does not provide an SLACK method.')
+  end
 end
 
 function [sol,s] = nonsmooth_trust_region_algorithm(lower_level_problem,upper_level_problem,sol,s,param)
@@ -75,7 +80,7 @@ function [sol,s] = nonsmooth_trust_region_algorithm(lower_level_problem,upper_le
       s.radius = param.gamma1*s.radius;
     end
 
-    fprintf('sol = %f, grad = %f, radius = %f, rho = %f, step = %f, y = %f, q = %f\n',sol,s.grad,s.radius,rho,step,y,sol-2*y);
+    fprintf('sol = %f, grad = %f, radius = %f, rho = %f, step = %f, y = %f, q = %f\n',sol,s.grad,s.radius,rho,step,y,upper_level_problem.slack(y,sol));
 
   else
     grad = [0.4*sol;0.5*(y-1)+0.4*sol];
@@ -105,7 +110,7 @@ function [sol,s] = nonsmooth_trust_region_algorithm(lower_level_problem,upper_le
       s.radius = param.gamma1*s.radius;
     end
 
-    fprintf('sol = %f, grad = %f, radius = %f, rho = %f, step = %f, stat = %f, y = %f , q = %f\n',sol,norm(grad),s.radius,rho,step,stationarity,y, sol-2*y);
+    fprintf('sol = %f, grad = %f, radius = %f, rho = %f, step = %f, stat = %f, y = %f , q = %f\n',sol,norm(grad),s.radius,rho,step,stationarity,y,upper_level_problem.slack(y,sol));
   end
 
 end
