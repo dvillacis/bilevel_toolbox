@@ -12,7 +12,7 @@ function [sol,s,param] = nonsmooth_trust_region_initialize(x_0,lower_level_probl
   s.radius = param.radius;
   s.hess = 0;
   s.yold = lower_level_problem.solve(sol);
-  s.gradold = upper_level_problem.adjoint(s.yold,sol);
+  %s.gradold = upper_level_problem.adjoint(s.yold,sol);
 
   % Test if the min radius is defined
   if ~isfield(param,'minradius')
@@ -40,8 +40,13 @@ function [sol,s] = nonsmooth_trust_region_algorithm(lower_level_problem,upper_le
   % Solving the state equation (lower level solver)
   y = lower_level_problem.solve(sol);
 
+  % Getting the very active and possibly biactive sets
+  slack = upper_level_problem.slack(y,sol);
+  active = find(abs(slack) < 1-0.5*s.radius);
+  biactive = find(abs(y) <= 0.5*s.radius && abs(slack) >= 1-0.5*s.radius);
+
   % Solving the adjoint state
-  s.grad = upper_level_problem.adjoint(y,sol);
+  s.grad = upper_level_problem.adjoint(y,sol,active,biactive);
 
   % Getting current cost
   cost = upper_level_problem.eval(y,sol);
@@ -80,14 +85,12 @@ function [sol,s] = nonsmooth_trust_region_algorithm(lower_level_problem,upper_le
       s.radius = param.gamma1*s.radius;
     end
 
-    fprintf('sol = %f, grad = %f, radius = %f, rho = %f, step = %f, y = %f, q = %f\n',sol,s.grad,s.radius,rho,step,y,upper_level_problem.slack(y,sol));
+    fprintf('sol = %f, grad = %f, radius = %f, rho = %f, step = %f\n',sol,norm(s.grad),s.radius,rho,step);
 
   else
-    slack = upper_level_problem.slack(y,sol);
-    grad = [0.4*sol;0.5*(y-1)+0.4*sol];
 
-    [xi,step] = tr_subproblem_complex(grad,s.radius);
-    stationarity = tr_complex_stationarity_measure(grad);
+    [xi,step] = tr_subproblem_complex(s.grad,s.radius);
+    stationarity = tr_complex_stationarity_measure(s.grad);
 
     % Record previous step
     s.yold = y;
@@ -111,7 +114,7 @@ function [sol,s] = nonsmooth_trust_region_algorithm(lower_level_problem,upper_le
       s.radius = param.gamma1*s.radius;
     end
 
-    fprintf('sol = %f, grad = %f, radius = %f, rho = %f, step = %f, stat = %f, y = %f , q = %f\n',sol,norm(grad),s.radius,rho,step,stationarity,y,upper_level_problem.slack(y,sol));
+    fprintf('COMPLEX: sol = %f, grad = %f, radius = %f, rho = %f, step = %f, stat = %f\n',sol,norm(s.grad),s.radius,rho,step,stationarity);
   end
 
 end
