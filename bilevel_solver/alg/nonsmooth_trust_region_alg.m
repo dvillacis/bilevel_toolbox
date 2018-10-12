@@ -11,7 +11,7 @@ function [sol,s,param] = nonsmooth_trust_region_initialize(x_0,lower_level_probl
   sol = x_0;
   s.radius = param.radius;
   s.hess = 0;
-  s.yold = lower_level_problem.solve(sol);
+  %s.yold = lower_level_problem.solve(sol);
   %s.gradold = upper_level_problem.adjoint(s.yold,sol);
 
   % Test if the min radius is defined
@@ -39,14 +39,10 @@ function [sol,s] = nonsmooth_trust_region_algorithm(lower_level_problem,upper_le
 
   % Solving the state equation (lower level solver)
   y = lower_level_problem.solve(sol);
-
-  % Getting the very active and possibly biactive sets
-  slack = upper_level_problem.slack(y,sol);
-  active = find(abs(slack) < 1-0.5*s.radius);
-  biactive = find(abs(y) <= 0.5*s.radius && abs(slack) >= 1-0.5*s.radius);
+  y = y(:);
 
   % Solving the adjoint state
-  s.grad = upper_level_problem.adjoint(y,sol,active,biactive);
+  s.grad = upper_level_problem.adjoint(y,sol,s.radius);
 
   % Getting current cost
   cost = upper_level_problem.eval(y,sol);

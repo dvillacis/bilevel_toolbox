@@ -2,36 +2,25 @@ clear all;
 close all;
 clc;
 
-verbose = 2;
-
 init_bilevel_toolbox();
 
 %% Load dataset
 dataset = DatasetInFolder('data/circle_dataset_single_gaussian','*_circle_original.png','*_circle_noisy.png');
 
 %% Load input image
-% original = dataset.get_target(1);
-% noisy = dataset.get_corrupt(1);
+original = dataset.get_target(1);
+noisy = dataset.get_corrupt(1);
 
-%% Setup for the lower level problem
-lower_level_problem.solve = @(noisy,alpha) solve_rof_single_gaussian_lower_level(noisy,alpha);
+% Define lower level problem
+lower_level_problem.solve = @(alpha) solve_lower_level(alpha,noisy);
 
-%% Setup for the upper level problem
-upper_f1.eval = @(u,original) 0.5 * norm(u-original)^2;
-upper_f1.grad = @(u,original) u - original;
-upper_f1.beta = 1;
-
-% Upper level parameters
-upper_param_solver.verbose = verbose;
-upper_param_solver.maxit = 300;
-upper_param_solver.tol = 1e-7;
-
-% Setting the upper level problem data structure
-upper_level_problem.f1 = upper_f1;
-upper_level_problem.param = upper_param_solver;
+% Define upper level problem
+upper_level_problem.eval = @(u,alpha) 0.5*norm(u-original(:)).^2;
+upper_level_problem.adjoint = @(u,alpha,a,b) solve_adjoint(y,u,zd,alpha,a,b);
+upper_level_problem.slack = @(u,alpha) solve_slack(u,alpha,noisy);
 
 %% Solving the bilevel problem
-bilevel_param.verbose = verbose;
+bilevel_param.verbose = 2;
 bilevel_param.maxit = 100;
 bilevel_param.tol = 1e-3;
 bilevel_param.algo = 'NONSMOOTH_TRUST_REGION';
@@ -41,4 +30,21 @@ bilevel_param.gamma2 = 1.5;
 bilevel_param.eta1 = 0.25;
 bilevel_param.eta2 = 0.75;
 alpha = 0.5;
-[sol,info] = solve_bilevel(alpha,dataset,lower_level_problem,upper_level_problem,bilevel_param);
+[sol,info] = solve_bilevel(alpha,lower_level_problem,upper_level_problem,bilevel_param);
+
+function y = solve_lower_level(alpha,noisy)
+  param_lower_level.maxit = 2000;
+  param_lower_level.alpha = alpha;
+  y = solve_rof_cp_single_gaussian(noisy,param_lower_level);
+end
+
+function q = solve_slack(u,alpha,noisy)
+    [m,n] = size(noisy);
+    A = gradient_matrix(m,n);
+    q = A'\(noisy(:)-u(:));
+    q = reshape(q,m*n,2);
+end
+
+function grad = solve_adjoint(u,alpha,active,biactive)
+
+end
