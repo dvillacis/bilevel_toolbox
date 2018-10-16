@@ -1,5 +1,5 @@
 # Bilevel Toolbox
-This is a MATLAB Toolbox designed to test different bilevel optimization problems of the form $$ \min_u J(y,u)$$
+This is a MATLAB Toolbox designed to test different bilevel optimization problems of the form $ \min_u J(y,u)$
 
 ## Installation
 To use the toolbox, please execute the script `init_bilevel_toolbox.m` to place all the required scripts into the MATLAB path.
