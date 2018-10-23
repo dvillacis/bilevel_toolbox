@@ -16,7 +16,7 @@ lower_level_problem.solve = @(alpha) solve_lower_level(alpha,noisy);
 
 % Define upper level problem
 upper_level_problem.eval = @(u,alpha) 0.5*norm(u-original(:)).^2;
-upper_level_problem.adjoint = @(u,alpha,a,b) solve_adjoint(y,u,zd,alpha,a,b);
+upper_level_problem.adjoint = @(u,alpha,radius) solve_adjoint(u,alpha,radius);
 upper_level_problem.slack = @(u,alpha) solve_slack(u,alpha,noisy);
 
 %% Solving the bilevel problem
@@ -45,6 +45,6 @@ function q = solve_slack(u,alpha,noisy)
     q = reshape(q,m*n,2);
 end
 
-function grad = solve_adjoint(u,alpha,active,biactive)
+function grad = solve_adjoint(u,alpha,radius)
 
 end
