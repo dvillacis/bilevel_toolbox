@@ -5,12 +5,12 @@ clc;
 N = 10;
 
 % Check if reduced playing dataset if available
-% dataset_name = 'playing_cards_reduced.mat';
-% if exist(dataset_name,'file') == 0
-%    % There is no file, so I download it from url
-%    url_path = 'https://storage.googleapis.com/pagina-personal.appspot.com/img_research/img_datasets/playing_cards_dataset_reduced.mat';
-%    websave(dataset_name,url_path);
-% end
+dataset_name = 'playing_cards_reduced.mat';
+if exist(dataset_name,'file') == 0
+   % There is no file, so I download it from url
+   url_path = 'https://storage.googleapis.com/pagina-personal.appspot.com/img_research/img_datasets/playing_cards_dataset_reduced.mat';
+   websave(dataset_name,url_path);
+end
 
 % Load the mat dataset
 load playing_cards_reduced.mat;
@@ -25,11 +25,6 @@ for i=1:N
     write_img(clean_i,sprintf('%d_playing_cards_original.tif',i));
     write_img(noise_i,sprintf('%d_playing_cards_noisy.tif',i));
     fprintf('Image %d wrote successfully\n',i);
-%     subplot(1,2,1)
-%     imagesc_gray(clean_i);
-%     subplot(1,2,2)
-%     imagesc_gray(noise_i);
-%     pause;
 end
 
 function [] = write_img(img, img_file)
