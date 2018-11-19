@@ -24,15 +24,11 @@ function [sol,s,param] = nonsmooth_trust_region_initialize(x_0,lower_level_probl
     error('Lower Level Problem struct does not provide a SOLVE method.')
   end
 
-  % Test if upper level problem has an adjoint method
-  if ~isfield(upper_level_problem, 'adjoint')
-    error('Upper Level Problem struct does not provide an ADJOINT method.')
+  % Test if upper level problem has an gradient method
+  if ~isfield(upper_level_problem, 'gradient')
+    error('Upper Level Problem struct does not provide an GRADIENT method.')
   end
 
-  % Test if upper level problem has a slack method
-  if ~isfield(upper_level_problem, 'slack')
-    error('Upper Level Problem struct does not provide an SLACK method.')
-  end
 end
 
 function [sol,s] = nonsmooth_trust_region_algorithm(lower_level_problem,upper_level_problem,sol,s,param)
@@ -41,8 +37,8 @@ function [sol,s] = nonsmooth_trust_region_algorithm(lower_level_problem,upper_le
   y = lower_level_problem.solve(sol);
   y = y(:);
 
-  % Solving the adjoint state
-  s.grad = upper_level_problem.adjoint(y,sol,s.radius);
+  % Solving the gradient
+  s.grad = upper_level_problem.gradient(y,sol,s.radius);
 
   % Getting current cost
   cost = upper_level_problem.eval(y,sol);
@@ -135,13 +131,13 @@ function step = tr_subproblem(grad,hess,radius)
   end
 end
 
-function B = bfgs(B,y,s)
-  alpha = 1/(y'*s);
-  beta = 1/(s'*B*s);
-  u = y*y';
-  v = (B*s)*(s'*B');
-  B = B + alpha*u - beta*v;
-end
+% function B = bfgs(B,y,s)
+%   alpha = 1/(y'*s);
+%   beta = 1/(s'*B*s);
+%   u = y*y';
+%   v = (B*s)*(s'*B');
+%   B = B + alpha*u - beta*v;
+% end
 
 function A = constraints_matrix(grad)
   [m,n] = size(grad);

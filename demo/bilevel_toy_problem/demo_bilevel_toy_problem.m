@@ -12,8 +12,7 @@ zd = 1;
 alpha = 0.4;
 A = 2;
 upper_level_problem.eval = @(y,u) 0.5*norm(y-zd).^2 + 0.5*alpha*norm(u).^2;
-upper_level_problem.adjoint = @(y,u,radius) solve_adjoint(y,u,radius,zd,alpha,A);
-upper_level_problem.slack = @(y,u) u-A*y;
+upper_level_problem.gradient = @(y,u,radius) solve_gradient(y,u,radius,zd,alpha,A);
 
 % Initial control
 u = -5;
@@ -61,13 +60,13 @@ function y = solve_lower_level(u)
   end
 end
 
-% Adjoint Solver
-function grad = solve_adjoint(y,u,radius,zd,alpha,A)
+% Gradient Solver
+function grad = solve_gradient(y,u,radius,zd,alpha,A)
     % Getting the very active and possibly biactive sets
     slack = u-A*y;
     active = find(abs(slack) < 1-0.5*radius);
     biactive = find(abs(y) <= 0.5*radius && abs(slack) >= 1-0.5*radius);
-    
+
     if isempty(active) && isempty(biactive)
         grad = 0.5*(y-zd)+alpha*u;
     elseif ~isempty(active) && isempty(biactive)
