@@ -1,0 +1,17 @@
+\usepackage[Latin, Greek, CJK, Hebrew]{ucharclasses}
+\usepackage{xltxtra,xunicode}
+\usepackage{unicode-math}
+
+\usepackage{xeCJK} % The font I choose below is for Traditional Chinese. A good choice of font covering most of CJK is Hanazono fonts: http://fonts.jp/hanazono/ (which also cover Greek)
+\setCJKmainfont[AutoFakeBold, AutoFakeSlant]{Kaiti TC}
+\setCJKsansfont[AutoFakeSlant]{PingFang TC} % for Mac. Windows: "Microsoft YaHei New"/"Microsoft Yahei"
+\setCJKmonofont[AutoFakeBold, AutoFakeSlant]{PingFang TC} % Same as above
+
+\newfontfamily\greekfont{Cardo} % Download at http://scholarsfonts.net/cardofnt.html
+\newfontfamily\hebrewfont{Cardo} % same as above
+
+\newcommand{\latinfont}{\renewcommand\rmdefault{lmr}\renewcommand\sfdefault{lmss}\renewcommand\ttdefault{lmtt}\defaultfontfeatures[\rmfamily,\sffamily]{Ligatures=TeX}}
+
+\setTransitionsForLatin{\latinfont}{}
+\setTransitionsForGreek{\greekfont}{}
+\setTransitionsFor{Hebrew}{\hebrewfont\setRTL}{\setLTR}
