@@ -1,4 +1,4 @@
-function [sol,gap] = solve_rof_fb_single_gaussian(f,param)
+function [sol,gap] = solve_rof_cp_single_gaussian(f,param)
 
   % Start the counter
   t1 = tic;
