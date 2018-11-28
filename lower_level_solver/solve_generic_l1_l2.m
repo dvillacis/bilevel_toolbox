@@ -1,14 +1,15 @@
-function [sol,gap] = solve_generic_l1_l2(alpha,beta,As,Bs,omega,zeta,gamma,f,param)
+function [sol,gap] = solve_generic_l1_l2(lambda,alpha,Ks,Bs,z,q,gamma,param)
 % SOLVE_GENERIC_L1_L2 Genric solver for several image processing problems
 % This solver receives an abstract initial structure to support different
 % image processing models and solves those by using a Chabolle-Pock algorithm.
 % INPUTS
-%   alpha: l2 fidelity weights
-%   beta: l1 fidelity weights
-%   As: cell array of matrices corresponding to l2 problem
-%   Bs: cell array of matrices corresponding to the l1 problem
-%   gamma: Huber regularization parameter
-%   f: contaminated image
+%   lambda: l2 fidelity weights
+%   alpha: l1 fidelity weights
+%   Ks: cell array of matrices corresponding to l2 terms
+%   Bs: cell array of matrices corresponding to the l1 terms
+%   z: l2 data
+%   q: l1 data
+%   gamma: Huber regularization parameter for l1 terms
 %   param: struct with the algorithm specific parameters
 % OUTPUTS
 %   sol: minimizer for the optimization problem
