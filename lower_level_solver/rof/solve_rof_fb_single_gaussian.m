@@ -32,6 +32,8 @@ function [sol,gap] = solve_rof_fb_single_gaussian(f,param)
   [M, N] = size(f);
   f = f(:);
 
+  % Generate gradient matrix for this image
+  gradient_op = FinDiffOperator([M,N])
   nabla = gradient_matrix(M,N);
 
   p = zeros(M*N*2,1);
