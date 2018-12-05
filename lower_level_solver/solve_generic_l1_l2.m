@@ -1,4 +1,4 @@
-function [sol,gap] = solve_generic_l1_l2(lambda,alpha,Ks,Bs,z,q,gamma,param)
+function [sol,gap] = solve_generic_l1_l2(lambda,alpha,Ks,Bs,z,q,gamma,xinit,param)
 % SOLVE_GENERIC_L1_L2 Genric solver for several image processing problems
 % This solver receives an abstract initial structure to support different
 % image processing models and solves those by using a Chabolle-Pock algorithm.
@@ -38,8 +38,53 @@ function [sol,gap] = solve_generic_l1_l2(lambda,alpha,Ks,Bs,z,q,gamma,param)
   if ~isfield(param,'tol')
     param.tol = 1e-4;
   end
+  
+  % Test for cell input Ks
+  if ~iscell(Ks)
+      error('Ks must be a cell array');
+  end
+  
+  % Test for cell input Bs
+  if ~iscell(Bs)
+      error('Bs must be a cell array');
+  end
 
+  L = sqrt(8);
+  tau = 0.01;
+  sigma = 1/tau/L^2;
 
+  [M,N] = size(xinit);
+  sol = xinit;
+  sol_=sol;
+
+  % Concatenate l2 and l1 matrices
+  Kbb = cat(1,Ks{:},Bs{:});
+  y = zeros(size(Kbb,1),1);
+
+  for k = 1:param.maxit
+
+    % Dual update
+    y = y + sigma*Kbb*sol_;
+    y = calc_prox(y,z,q,lambda,alpha,tau);
+
+    % Primal update
+    sol_ = sol;
+    sol = sol - tau * Kbb' * y;
+
+    % Interpolation step
+    sol_ = 2^sol - sol_;
+
+    ga = 0;
+
+    if mod(k, param.check) == 0 && param.verbose > 1
+      fprintf('generic_l1_l2: iter = %4d, gap = %f\n', k, ga);
+    end
+
+    if ga < param.tol
+      break;
+    end
+
+  end
 
   % Print summary
   if param.verbose>0
@@ -49,4 +94,11 @@ function [sol,gap] = solve_generic_l1_l2(lambda,alpha,Ks,Bs,z,q,gamma,param)
     fprintf(' Execution Time: %f \n\n', toc(t1));
   end
 
+end
+
+function prox = calc_prox(y,z,q,lambda,alpha,tau)
+  f1 = (y-tau.*z)./(1+tau*(1/lambda)); % l2 proximal
+  f2_ = y-tau.*q;
+  f2 = reshape(bsxfun(@divide,y,max(1,sqrt(sum(f2_.^2,2))./alpha)),M*N*2,1);
+  prox = [f1;f2];
 end
