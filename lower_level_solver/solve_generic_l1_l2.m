@@ -76,9 +76,10 @@ function [sol,gap] = solve_generic_l1_l2(lambda,alpha,Ks,Bs,z,q,gamma,xinit,para
     sol = sol - tau * Kbb' * y;
 
     % Interpolation step
-    sol_ = 2^sol - sol_;
+    sol_ = 2*sol - sol_;
 
     ga = 0;
+    gap = 0;
 
     if mod(k, param.check) == 0 && param.verbose > 1
       fprintf('generic_l1_l2: iter = %4d, gap = %f\n', k, ga);
@@ -94,21 +95,23 @@ function [sol,gap] = solve_generic_l1_l2(lambda,alpha,Ks,Bs,z,q,gamma,xinit,para
   if param.verbose>0
     fprintf(['\n ','GENERIC_L1_L2_CHAMBOLLE_POCK',':\n']);
     fprintf(' %i iterations\n', k);
-    fprintf(' Primal-Dual Gap: %f \n\n', gap(end));
+    %fprintf(' Primal-Dual Gap: %f \n\n', gap(end));
     fprintf(' Execution Time: %f \n\n', toc(t1));
   end
 
 end
 
 function prox = calc_prox(y,z,q,Ks,Bs,lambda,alpha,tau)
+    index = 0;
     for k=1:length(Ks)
         n = size(Ks{k},1);
-        y(k:n) = (y(k:n)-tau.*z)./(1+tau*(1/lambda)); % l2 proximal
+        y(index+1:index+n) = (y(index+1:index+n)-tau.*z)./(1+tau*(1/lambda)); % l2 proximal
+        index = index + n;
     end
     for b = 1:length(Bs)
         n = size(Bs{b},1);
-        y(
-    f2_ = y-tau.*q;
-    f2 = reshape(bsxfun(@divide,y,max(1,sqrt(sum(f2_.^2,2))./alpha)),M*N*2,1);
-    prox = [f1;f2];
+        y(index+1:index+n) = projection_l2_ball(y(index+1:index+n)-tau*q,alpha);
+        index = index + n;
+    end
+    prox = y;
 end
