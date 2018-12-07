@@ -38,22 +38,26 @@ function [sol,gap] = solve_generic_l1_l2(lambda,alpha,Ks,Bs,z,q,gamma,xinit,para
   if ~isfield(param,'tol')
     param.tol = 1e-4;
   end
-  
+
   % Test for cell input Ks
   if ~iscell(Ks)
-      error('Ks must be a cell array');
+    error('Ks must be a cell array.');
   end
-  
+
   % Test for cell input Bs
   if ~iscell(Bs)
-      error('Bs must be a cell array');
+    error('Bs must be a cell array.');
+  end
+
+  % Test for input vector
+  if ~isvector(xinit)
+    error('xinit must ve a vector, not a matrix.');
   end
 
   L = sqrt(8);
   tau = 0.01;
   sigma = 1/tau/L^2;
 
-  [M,N] = size(xinit);
   sol = xinit;
   sol_=sol;
 
@@ -65,7 +69,7 @@ function [sol,gap] = solve_generic_l1_l2(lambda,alpha,Ks,Bs,z,q,gamma,xinit,para
 
     % Dual update
     y = y + sigma*Kbb*sol_;
-    y = calc_prox(y,z,q,lambda,alpha,tau);
+    y = calc_prox(y,z,q,Ks,Bs,lambda,alpha,tau);
 
     % Primal update
     sol_ = sol;
@@ -96,9 +100,15 @@ function [sol,gap] = solve_generic_l1_l2(lambda,alpha,Ks,Bs,z,q,gamma,xinit,para
 
 end
 
-function prox = calc_prox(y,z,q,lambda,alpha,tau)
-  f1 = (y-tau.*z)./(1+tau*(1/lambda)); % l2 proximal
-  f2_ = y-tau.*q;
-  f2 = reshape(bsxfun(@divide,y,max(1,sqrt(sum(f2_.^2,2))./alpha)),M*N*2,1);
-  prox = [f1;f2];
+function prox = calc_prox(y,z,q,Ks,Bs,lambda,alpha,tau)
+    for k=1:length(Ks)
+        n = size(Ks{k},1);
+        y(k:n) = (y(k:n)-tau.*z)./(1+tau*(1/lambda)); % l2 proximal
+    end
+    for b = 1:length(Bs)
+        n = size(Bs{b},1);
+        y(
+    f2_ = y-tau.*q;
+    f2 = reshape(bsxfun(@divide,y,max(1,sqrt(sum(f2_.^2,2))./alpha)),M*N*2,1);
+    prox = [f1;f2];
 end
