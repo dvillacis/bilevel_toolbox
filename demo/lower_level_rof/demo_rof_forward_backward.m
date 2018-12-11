@@ -12,7 +12,7 @@ original = dataset.get_target(1);
 noisy = dataset.get_corrupt(1);
 
 %% Solving the Lower Level Problem
-param_solver.maxit = 100;
+param_solver.maxiter = 100;
 param_solver.alpha = 0.1;
 param_solver.verbose = 2;
 
@@ -23,5 +23,5 @@ imagesc_gray(original,1,'Original Image');
 imagesc_gray(noisy,2,'Noisy Image');
 imagesc_gray(sol,3,'Denoised Image');
 
-figure 
+figure
 plot(gap);

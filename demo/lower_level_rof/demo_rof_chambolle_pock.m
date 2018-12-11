@@ -14,7 +14,7 @@ noisy = dataset.get_corrupt(10);
 
 %% Solving the Lower Level Problem
 param_solver.verbose = 2;
-param_solver.maxit = 900;
+param_solver.maxiter = 900;
 param_solver.alpha = 0.1;
 
 [sol,gap] = solve_rof_cp_single_gaussian(noisy,param_solver);

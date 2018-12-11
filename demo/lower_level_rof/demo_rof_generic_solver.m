@@ -18,7 +18,7 @@ noisy = dataset.get_corrupt(1);
 
 %% Solving the Lower Level Problem
 param_solver.verbose = 2;
-param_solver.maxit = 900;
+param_solver.maxiter = 900;
 param_solver.alpha = 0.1;
 
 %% Define the cell matrices

@@ -9,7 +9,7 @@ function [sol,gap] = solve_rof_fb_single_gaussian(f,param)
   end
 
   % Test maxiter parameter
-  if ~isfield(param,'maxit')
+  if ~isfield(param,'maxiter')
     param.maxiter = 1000;
   end
 
@@ -42,7 +42,7 @@ function [sol,gap] = solve_rof_fb_single_gaussian(f,param)
   L = 8;
   gap = [];
 
-  for k = 1:param.maxit
+  for k = 1:param.maxiter
 
     p_old = p;
     p = p - 0.99/L*(nabla*(nabla'*p - f));

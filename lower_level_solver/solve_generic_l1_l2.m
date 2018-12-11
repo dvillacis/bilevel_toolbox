@@ -20,7 +20,7 @@ function [sol,gap] = solve_generic_l1_l2(lambda,alpha,Ks,Bs,z,q,gamma,xinit,para
   t1 = tic;
 
   % Test maxiter parameter
-  if ~isfield(param,'maxit')
+  if ~isfield(param,'maxiter')
     param.maxiter = 1000;
   end
 
@@ -65,7 +65,7 @@ function [sol,gap] = solve_generic_l1_l2(lambda,alpha,Ks,Bs,z,q,gamma,xinit,para
   Kbb = cat(1,Ks{:},Bs{:});
   y = zeros(size(Kbb,1),1);
 
-  for k = 1:param.maxit
+  for k = 1:param.maxiter
 
     % Dual update
     y = y + sigma*Kbb*sol_;

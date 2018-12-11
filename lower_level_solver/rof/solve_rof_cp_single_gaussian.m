@@ -42,7 +42,7 @@ function [sol,gap] = solve_rof_cp_single_gaussian(f,param)
   sigma = 1/tau/L^2;
   gap = [];
 
-  for k = 1:param.maxit
+  for k = 1:param.maxiter
 
     p = p + sigma*nabla*sol_;
     p = reshape(p,M*N,2);
