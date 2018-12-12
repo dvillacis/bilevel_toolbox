@@ -15,7 +15,7 @@ function [sol,gap] = solve_generic_l1_l2(lambda,alpha,Ks,Bs,z,q,gamma,xinit,para
 %   sol: minimizer for the optimization problem
 %   gap: primal-dual gap values per iteration
 %
-  global FUBAR;
+  global FUBAR; %% TODO: Remove and rename FUBAR
   FUBAR=[];
 
   % Start the counter
