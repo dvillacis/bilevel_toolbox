@@ -19,7 +19,6 @@ noisy = dataset.get_corrupt(1);
 %% Solving the Lower Level Problem
 param_solver.verbose = 2;
 param_solver.maxiter = 900;
-param_solver.alpha = 0.1;
 
 %% Define the cell matrices
 [M,N] = size(original);
@@ -33,7 +32,7 @@ alpha = 0.1;
 gamma = 0; % NO Huber regularization
 
 %% Call the solver
-[sol,gap] = solve_generic_l1_l2(lambda,alpha,{K},{B},z,q,gamma,noisy(:),param_solver);
+[sol,gap] = solve_generic_l1_l2(lambda,alpha,{K},{B},z,q,gamma,0*noisy(:),param_solver);
 
 %% Plotting the solution
 figure(1)
@@ -45,4 +44,4 @@ subplot(1,3,3)
 imagesc_gray(reshape(sol,M,N),1,'Denoised Image');
 
 figure(2)
-semilogy(gap);
+loglog(gap);

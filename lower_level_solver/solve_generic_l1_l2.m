@@ -15,6 +15,8 @@ function [sol,gap] = solve_generic_l1_l2(lambda,alpha,Ks,Bs,z,q,gamma,xinit,para
 %   sol: minimizer for the optimization problem
 %   gap: primal-dual gap values per iteration
 %
+  global FUBAR;
+  FUBAR=[];
 
   % Start the counter
   t1 = tic;
@@ -54,9 +56,9 @@ function [sol,gap] = solve_generic_l1_l2(lambda,alpha,Ks,Bs,z,q,gamma,xinit,para
     error('xinit must ve a vector, not a matrix.');
   end
 
-  L = sqrt(8);
-  tau = 0.01;
-  sigma = 1/tau/L^2;
+  L = sqrt(8+1);
+  tau = 0.05/L;
+  sigma = 0.99/(tau*L^2);
 
   sol = xinit;
   sol_=sol;
@@ -65,11 +67,17 @@ function [sol,gap] = solve_generic_l1_l2(lambda,alpha,Ks,Bs,z,q,gamma,xinit,para
   Kbb = cat(1,Ks{:},Bs{:});
   y = zeros(size(Kbb,1),1);
 
+  gap = [compute_generic_l1_l2_pd_gap(sol,y,Ks,Bs,lambda,alpha,z,q)];
+
+  if param.verbose > 1
+    fprintf('generic_l1_l2: iter = %4d, gap = %f\n', 0, gap(1));
+  end
+
   for k = 1:param.maxiter
 
     % Dual update
     y = y + sigma*Kbb*sol_;
-    y = calc_prox(y,z,q,Ks,Bs,lambda,alpha,tau);
+    y = calc_prox(y,z,q,Ks,Bs,lambda,alpha,sigma);
 
     % Primal update
     sol_ = sol;
@@ -78,8 +86,8 @@ function [sol,gap] = solve_generic_l1_l2(lambda,alpha,Ks,Bs,z,q,gamma,xinit,para
     % Interpolation step
     sol_ = 2*sol - sol_;
 
-    ga = 0;
-    gap = 0;
+    ga = compute_generic_l1_l2_pd_gap(sol,y,Ks,Bs,lambda,alpha,z,q);
+    gap = [gap, ga];
 
     if mod(k, param.check) == 0 && param.verbose > 1
       fprintf('generic_l1_l2: iter = %4d, gap = %f\n', k, ga);
@@ -108,8 +116,8 @@ function prox = calc_prox(y,z,q,Ks,Bs,lambda,alpha,tau)
         y(index+1:index+n) = (y(index+1:index+n)-tau.*z)./(1+tau*(1/lambda)); % l2 proximal
         index = index + n;
     end
-    for b = 1:length(Bs)
-        n = size(Bs{b},1);
+    for l = 1:length(Bs)
+        n = size(Bs{l},1);
         y(index+1:index+n) = projection_l2_ball(y(index+1:index+n)-tau*q,alpha);
         index = index + n;
     end

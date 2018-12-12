@@ -50,7 +50,7 @@ function [sol,gap] = solve_rof_cp_single_gaussian(f,param)
 
     sol_ = sol;
     sol = sol - tau*nabla'*p;
-    sol = (sol+tau*f)/(1+tau);
+    sol = (sol+tau*f)/(1+tau); %% TODO: No dividir en cada iteracion
     sol_ = 2*sol -sol_;
 
     ga = compute_rof_pd_gap(nabla, sol, p, f, param.alpha, 0, M, N);
