@@ -13,6 +13,6 @@ if mod(N,2) ~= 0
 end
 
 x_ = reshape(x,N/2,2);
-y = sqrt(sum(x_.^2,2));
+y = rssq(x_,2);
 
 end

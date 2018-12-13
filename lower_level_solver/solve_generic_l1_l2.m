@@ -103,7 +103,7 @@ function [sol,gap] = solve_generic_l1_l2(lambda,alpha,Ks,Bs,z,q,gamma,xinit,para
   if param.verbose>0
     fprintf(['\n ','GENERIC_L1_L2_CHAMBOLLE_POCK',':\n']);
     fprintf(' %i iterations\n', k);
-    %fprintf(' Primal-Dual Gap: %f \n\n', gap(end));
+    fprintf(' Primal-Dual Pseudo-Gap: %f \n', gap(end));
     fprintf(' Execution Time: %f \n\n', toc(t1));
   end
 

@@ -10,7 +10,8 @@ clc;
 init_bilevel_toolbox();
 
 % Load dataset
-dataset = DatasetInFolder('data/circle_dataset_single_gaussian','*_circle_original.png','*_circle_noisy.png');
+%dataset = DatasetInFolder('data/circle_dataset_single_gaussian','*_circle_original.png','*_circle_noisy.png');
+dataset = DatasetInFolder('data/playing_cards','*_playing_cards_original.tif','*_playing_cards_noisy.tif');
 
 %% Load input image
 original = dataset.get_target(1);

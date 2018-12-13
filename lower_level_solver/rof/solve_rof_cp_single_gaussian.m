@@ -42,15 +42,19 @@ function [sol,gap] = solve_rof_cp_single_gaussian(f,param)
   sigma = 1/tau/L^2;
   gap = [];
 
+  % Auxiliary terms
+  a = 1/(1+tau);
+  b = 1/param.alpha;
+
   for k = 1:param.maxiter
 
     p = p + sigma*nabla*sol_;
     p = reshape(p,M*N,2);
-    p = reshape(bsxfun(@rdivide,p,max(1, sqrt(sum(p.^2,2))/param.alpha)), M*N*2,1);
+    p = reshape(bsxfun(@rdivide,p,max(1, b*rssq(p,2))), M*N*2,1);
 
     sol_ = sol;
     sol = sol - tau*nabla'*p;
-    sol = (sol+tau*f)/(1+tau); %% TODO: No dividir en cada iteracion
+    sol = a*(sol+tau*f);
     sol_ = 2*sol -sol_;
 
     ga = compute_rof_pd_gap(nabla, sol, p, f, param.alpha, 0, M, N);

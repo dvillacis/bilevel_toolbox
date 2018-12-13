@@ -42,12 +42,16 @@ function [sol,gap] = solve_rof_fb_single_gaussian(f,param)
   L = 8;
   gap = [];
 
+  % Auxiliary terms
+  a = 0.99/L;
+  b = 1/param.alpha;
+
   for k = 1:param.maxiter
 
     p_old = p;
-    p = p - 0.99/L*(nabla*(nabla'*p - f)); %% TODO: Evitar division (precalcular afuera)
+    p = p - a*(nabla*(nabla'*p - f));
     p = reshape(p,M*N,2);
-    p = reshape(bsxfun(@rdivide,p,max(1, sqrt(sum(p.^2,2))/param.alpha)), M*N*2,1);
+    p = reshape(bsxfun(@rdivide,p,max(1, b*rssq(p,2))), M*N*2,1);
     grad = p_old-p;
     p = p_old - 1.9*grad;
 
