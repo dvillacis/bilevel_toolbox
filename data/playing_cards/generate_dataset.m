@@ -17,14 +17,18 @@ load playing_cards_reduced.mat;
 
 % Generate the patches for random rectangles of 128x128 pixels
 [xmax,ymax] = size(im_clean);
-for i=1:N
+written = 0;
+while written <= N
     rnd_x0 = randi([1500,xmax-1500],1,1);
     rnd_y0 = randi([1500,ymax-1500],1,1);
     clean_i = imcrop(im_clean,[rnd_x0 rnd_y0 511 511]);
     noise_i = imcrop(im_noise3,[rnd_x0 rnd_y0 511 511]);
-    write_img(clean_i,sprintf('%d_playing_cards_original.tif',i));
-    write_img(noise_i,sprintf('%d_playing_cards_noisy.tif',i));
-    fprintf('Image %d wrote successfully\n',i);
+    if ~isempty(clean_i)
+        write_img(clean_i,sprintf('data/playing_cards/%d_playing_cards_original.tif',written));
+        write_img(noise_i,sprintf('data/playing_cards/%d_playing_cards_noisy.tif',written));
+        fprintf('Image %d wrote successfully\n',written);
+        written = written + 1;
+    end
 end
 
 function [] = write_img(img, img_file)
@@ -50,4 +54,3 @@ function [] = write_img(img, img_file)
     t.write(img);
     t.close()
 end
-

@@ -1,8 +1,5 @@
 function [sol,gap] = solve_rof_cp_single_gaussian(f,param)
 
-  % Start the counter
-  t1 = tic;
-
   % Test alpha parameter
   if ~isfield(param,'alpha')
     error('Lower Level Problem struct does not provide an ALPHA parameter.')
@@ -45,6 +42,9 @@ function [sol,gap] = solve_rof_cp_single_gaussian(f,param)
   % Auxiliary terms
   a = 1/(1+tau);
   b = 1/param.alpha;
+
+  % Start the counter
+  t1 = tic;
 
   for k = 1:param.maxiter
 
