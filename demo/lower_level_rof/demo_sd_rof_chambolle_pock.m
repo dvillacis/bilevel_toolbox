@@ -9,8 +9,8 @@ init_bilevel_toolbox();
 dataset = DatasetInFolder('data/playing_cards','*_playing_cards_original.tif','*_playing_cards_noisy.tif');
 
 %% Load input image
-original = dataset.get_target(5);
-noisy = dataset.get_corrupt(5);
+original = dataset.get_target(9);
+noisy = dataset.get_corrupt(9);
 [M,N] = size(original);
 
 %% Solving the Lower Level Problem
@@ -31,3 +31,6 @@ imagesc_gray(sol,1,'Denoised Image');
 
 figure(2)
 loglog(gap);
+
+figure(3)
+

@@ -10,11 +10,11 @@ Kbb = cat(1,Ks{:},Bs{:});
 % Calculate primal value
 primal_1 = 0;
 for k=1:length(Ks)
-  primal_1 = primal_1 + lambda*norm(Ks{k}*x-z).^2;
+  primal_1 = primal_1 + lambda .* norm(Ks{k}*x-z).^2;
 end
 primal_2 = 0;
 for l = 1:length(Bs)
-  primal_2 = primal_2 + alpha * norm(Bs{l}*x-q,1);
+  primal_2 = primal_2 + sum(alpha{l} .* l2_norm(Bs{l}*x-q));
 end
 primal_reg = 0;%0.5*gamma*norm(x).^2;
 primal = primal_1 + primal_2 + primal_reg;
@@ -30,7 +30,7 @@ end
 dual_2 = 0;
 for l = 1:length(Bs)
   n = size(Bs{l},1);
-  dual_2 = dual_2 + indicator_ball(y(index+1:index+n),alpha) + y(index+1:index+n)' * q;
+  dual_2 = dual_2 + y(index+1:index+n)' * q;
   index = index+n;
 end
 %dual_reg = 0.5*(1/gamma)*norm(Kbb'*y).^2;
@@ -43,13 +43,4 @@ dual = dual_1 + dual_2 + dual_reg;
 
 % Calculate the gap
 gap = primal+dual;
-end
-
-function [ind] = indicator_ball(y,alpha)
-  py = y./(max(1,norm(y)/alpha));
-  if isequal(y,py)
-    ind = 1;
-  else
-    ind = 0;
-  end
 end

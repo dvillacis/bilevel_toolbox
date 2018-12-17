@@ -1,4 +1,4 @@
-%% ROF DENOISING USING GENERIC L1 L2 SOLVER
+%% SCALE DEPENDENT ROF DENOISING USING GENERIC L1 L2 SOLVER
 % This sample script will show how to use the generic l1 l2 solver to denoise a gray image
 % using the Rudin-Osher-Fatemi (ROF) denoising model.
 
@@ -19,7 +19,7 @@ noisy = dataset.get_corrupt(1);
 
 %% Solving the Lower Level Problem
 param_solver.verbose = 2;
-param_solver.maxiter = 700;
+param_solver.maxiter = 900;
 
 %% Define the cell matrices
 [M,N] = size(original);
@@ -28,7 +28,7 @@ z = noisy(:);
 lambda = 1;
 B = gradient_matrix(M,N);
 q = zeros(2*M*N,1);
-alpha = 0.1;
+alpha = 0.9*reshape(triu(ones(M,N)),M*N,1);
 
 gamma = 0; % NO Huber regularization
 
@@ -46,3 +46,7 @@ imagesc_gray(reshape(sol,M,N),1,'Denoised Image');
 
 figure(2)
 loglog(gap);
+
+figure(3)
+[a,b] = meshgrid(1:M,1:N);
+surf(a,b,reshape(alpha,M,N));

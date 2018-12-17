@@ -50,6 +50,11 @@ function [sol,gap] = solve_generic_l1_l2(lambda,alpha,Ks,Bs,z,q,gamma,xinit,para
   if ~iscell(Bs)
     error('Bs must be a cell array.');
   end
+  
+  % Test for cell input alpha
+  if ~iscell(alpha)
+      error('alpha must be a cell array.');
+  end
 
   % Test for input vector
   if ~isvector(xinit)
@@ -113,12 +118,12 @@ function prox = calc_prox(y,z,q,Ks,Bs,lambda,alpha,tau)
     index = 0;
     for k=1:length(Ks)
         n = size(Ks{k},1);
-        y(index+1:index+n) = (y(index+1:index+n)-tau.*z)./(1+tau*(1/lambda)); % l2 proximal
+        y(index+1:index+n) = (y(index+1:index+n)-tau.*z)./(1+tau*(1./lambda)); % l2 proximal
         index = index + n;
     end
     for l = 1:length(Bs)
         n = size(Bs{l},1);
-        y(index+1:index+n) = projection_l2_ball(y(index+1:index+n)-tau*q,alpha);
+        y(index+1:index+n) = projection_l2_ball(y(index+1:index+n)-tau*q,alpha{l});
         index = index + n;
     end
     prox = y;
