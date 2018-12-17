@@ -57,7 +57,7 @@ function [sol,gap] = solve_rof_cp_single_gaussian(f,param)
     sol = a*(sol+tau*f);
     sol_ = 2*sol -sol_;
 
-    ga = compute_rof_pd_gap(nabla, sol, p, f, param.alpha, 0, M, N);
+    ga = compute_rof_pd_gap(nabla, sol, p, f, param.alpha, M, N);
 
     gap = [gap, ga];
 
