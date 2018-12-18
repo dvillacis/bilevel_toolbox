@@ -95,7 +95,7 @@ function [sol,gap] = solve_generic_l1_l2(lambda,alpha,Ks,Bs,z,q,gamma,xinit,para
     gap = [gap, ga];
 
     if mod(k, param.check) == 0 && param.verbose > 1
-      fprintf('generic_l1_l2: iter = %4d, gap = %f\n', k, ga);
+      fprintf('generic_l1_l2: iter = %4d, pseudo-gap = %f\n', k, ga);
     end
 
     if ga < param.tol
@@ -118,7 +118,7 @@ function prox = calc_prox(y,z,q,Ks,Bs,lambda,alpha,tau)
     index = 0;
     for k=1:length(Ks)
         n = size(Ks{k},1);
-        y(index+1:index+n) = (y(index+1:index+n)-tau.*z)./(1+tau*(1./lambda)); % l2 proximal
+        y(index+1:index+n) = (y(index+1:index+n)-tau.*z)./(1+0.5*tau*(1./lambda)); % l2 proximal
         index = index + n;
     end
     for l = 1:length(Bs)

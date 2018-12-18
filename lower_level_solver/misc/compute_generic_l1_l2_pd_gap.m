@@ -24,7 +24,7 @@ index = 0;
 dual_1 = 0;
 for k=1:length(Ks)
   n = size(Ks{k},1);
-  dual_1 = dual_1 + 0.5*(1/lambda)*norm(y(index+1:index+n)).^2 + y(index+1:index+n)' * z;
+  dual_1 = dual_1 + 0.25*(1/lambda)*norm(y(index+1:index+n)).^2 + y(index+1:index+n)' * z;
   index = index+n;
 end
 dual_2 = 0;

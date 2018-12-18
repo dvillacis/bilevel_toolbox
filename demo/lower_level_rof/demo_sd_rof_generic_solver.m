@@ -28,7 +28,7 @@ z = noisy(:);
 lambda = 1;
 B = gradient_matrix(M,N);
 q = zeros(2*M*N,1);
-alpha = 0.9*reshape(triu(ones(M,N)),M*N,1);
+alpha = 0.2*reshape(triu(ones(M,N)),M*N,1);
 
 gamma = 0; % NO Huber regularization
 
