@@ -21,8 +21,7 @@ classdef FinDiffOperator < MatrixOperator
             obj.UseOpt = true;
             obj.UseMex = true;
             obj.CVXVersion = true;
-            obj.Bound = sqrt(8);
-            obj.LowerBound = 0;
+            obj.Bound = obj.bound();
         end
 
         function fn = selmex(usemex,cvxversion,fast,normal)
@@ -72,7 +71,11 @@ classdef FinDiffOperator < MatrixOperator
         function outputArg = matrix(obj)
             %MATRIX Return a matrix representation of the operator
             %   Detailed explanation goes here
-            outputArg = diff2d(dim,obj.Method);
+            outputArg = diff2d(obj.Dim,obj.Method);
+        end
+
+        function bnd = bound(obj)
+            bnd = norm(obj.matrix());
         end
 
         function res = fwddiff(x)

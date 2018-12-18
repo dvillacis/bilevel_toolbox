@@ -98,8 +98,10 @@ function [sol,gap] = solve_generic_l1_l2(lambda,alpha,Ks,Bs,z,q,gamma,xinit,para
       fprintf('generic_l1_l2: iter = %4d, pseudo-gap = %f\n', k, ga);
     end
 
+    % Stopping criteria
     if ga < param.tol
-      break;
+        fprintf('generic_l1_l2: gap-drop= %f, stopping criteria met.\n',ga);
+        break;
     end
 
   end

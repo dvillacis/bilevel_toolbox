@@ -3,7 +3,7 @@ classdef MatrixOperator < Operator
     %   Detailed explanation goes here
 
     properties
-        Property1
+        
     end
 
     methods (Abstract)

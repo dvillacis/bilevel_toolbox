@@ -4,7 +4,7 @@ classdef Operator
     %   handling operators numerically.
 
     properties
-        Property1
+        
     end
 
     methods (Abstract)

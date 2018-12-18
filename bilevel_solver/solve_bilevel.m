@@ -54,8 +54,14 @@ function [sol,info] = solve_bilevel(x_0, lower_level_problem, upper_level_proble
   info.iter = iter;
   info.crit = crit;
   info.time = toc(t1);
-
-  summary_print(s,info,iter,algo,crit,param);
+  
+  % Print summary
+  if param.verbose>0
+    fprintf(['\n ','%s',':\n'],info.algo);
+    fprintf(' %i iterations\n', info.iter);
+    %fprintf(' Primal-Dual Gap: %f \n', gap(end));
+    fprintf(' Execution Time: %f \n\n', info.time);
+  end
 
 end
 
