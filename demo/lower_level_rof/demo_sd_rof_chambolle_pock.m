@@ -32,5 +32,3 @@ imagesc_gray(sol,1,'Denoised Image');
 figure(2)
 loglog(gap);
 
-figure(3)
-

@@ -16,7 +16,8 @@ primal_2 = 0;
 for l = 1:length(Bs)
   primal_2 = primal_2 + sum(alpha{l} .* l2_norm(Bs{l}*x-q));
 end
-primal_reg = 0;%0.5*gamma*norm(x).^2;
+primal_reg = 0;
+%primal_reg = 0.5*gamma*norm(x).^2;
 primal = primal_1 + primal_2 + primal_reg;
 
 % Calculate dual value

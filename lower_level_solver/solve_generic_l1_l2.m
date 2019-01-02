@@ -38,7 +38,7 @@ function [sol,gap] = solve_generic_l1_l2(lambda,alpha,Ks,Bs,z,q,gamma,xinit,para
 
   % Test tol parameter
   if ~isfield(param,'tol')
-    param.tol = 1e-4;
+    param.tol = 1e-3;
   end
 
   % Test for cell input Ks
@@ -61,9 +61,13 @@ function [sol,gap] = solve_generic_l1_l2(lambda,alpha,Ks,Bs,z,q,gamma,xinit,para
     error('xinit must ve a vector, not a matrix.');
   end
 
-  L = sqrt(8+1);
-  tau = 0.05/L;
-  sigma = 0.99/(tau*L^2);
+%   L = sqrt(8+1);
+%   tau = 0.05/L;
+%   sigma = 0.99/(tau*L^2);
+  
+  L = sqrt(8);
+  tau = 0.01;
+  sigma = 1/tau/L^2;
 
   sol = xinit;
   sol_=sol;
@@ -100,7 +104,7 @@ function [sol,gap] = solve_generic_l1_l2(lambda,alpha,Ks,Bs,z,q,gamma,xinit,para
 
     % Stopping criteria
     if ga < param.tol
-        fprintf('generic_l1_l2: gap-drop= %f, stopping criteria met.\n',ga);
+        fprintf('generic_l1_l2: ga = %f, stopping criteria met.\n',ga);
         break;
     end
 

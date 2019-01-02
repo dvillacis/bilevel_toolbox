@@ -22,7 +22,7 @@ function [sol,gap] = solve_rof_fb_single_gaussian(f,param)
 
   % Test tol parameter
   if ~isfield(param,'tol')
-    param.tol = 1e-4;
+    param.tol = 1e-3;
   end
 
 
@@ -30,8 +30,9 @@ function [sol,gap] = solve_rof_fb_single_gaussian(f,param)
   f = f(:);
 
   % Generate gradient matrix for this image
-  gradient_op = FinDiffOperator([M,N])
-  nabla = gradient_matrix(M,N);
+  gradient = FinDiffOperator([M,N],'fn');
+  nabla = gradient.matrix();
+  nablat = nabla';
 
   p = zeros(M*N*2,1);
   p_old = p;
@@ -49,14 +50,14 @@ function [sol,gap] = solve_rof_fb_single_gaussian(f,param)
   for k = 1:param.maxiter
 
     p_old = p;
-    p = p - a*(nabla*(nabla'*p - f));
+    p = p - a*(nabla*(nablat*p - f));
     p = reshape(p,M*N,2);
     p = reshape(bsxfun(@rdivide,p,max(1, b*rssq(p,2))), M*N*2,1);
     grad = p_old-p;
     p = p_old - 1.9*grad;
 
-    sol = f - nabla'*p;
-    [ga, ~, ~] = compute_rof_pd_gap(nabla, sol, p, f, param.alpha, M, N);
+    sol = f - nablat*p;
+    [ga, ~, ~] = compute_rof_pd_gap(nabla, nablat, sol, p, f, param.alpha, M, N);
 
     gap = [gap, ga];
 
@@ -64,9 +65,9 @@ function [sol,gap] = solve_rof_fb_single_gaussian(f,param)
       fprintf('rof_fb: iter = %4d, gap = %f\n', k, ga);
     end
 
-    % if ga <= param.tol
-    %   break;
-    % end
+    if ga <= param.tol
+      break;
+    end
 
   end
   sol = reshape(sol,M,N);

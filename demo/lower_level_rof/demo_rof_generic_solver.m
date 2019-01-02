@@ -26,7 +26,8 @@ param_solver.maxiter = 3000;
 K = speye(M*N);
 z = noisy(:);
 lambda = 1;
-B = gradient_matrix(M,N);
+gradient = FinDiffOperator([M,N],'fn');
+B = gradient.matrix();
 q = zeros(2*M*N,1);
 alpha = 0.2;
 

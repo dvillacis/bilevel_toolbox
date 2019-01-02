@@ -34,7 +34,9 @@ function [sol,gap] = solve_sd_rof_cp_single_gaussian(f,param)
   [M, N] = size(f);
   f = f(:);
 
-  nabla = gradient_matrix(M,N);
+  gradient = FinDiffOperator([M,N],'fn');
+  nabla = gradient.matrix();
+  nablat = nabla';
 
   p = zeros(M*N*2,1);
   sol = f;
@@ -58,11 +60,11 @@ function [sol,gap] = solve_sd_rof_cp_single_gaussian(f,param)
     p = reshape(bsxfun(@rdivide,p,max(1, b.*rssq(p,2))), M*N*2,1);
 
     sol_ = sol;
-    sol = sol - tau*nabla'*p;
+    sol = sol - tau*nablat*p;
     sol = a*(sol+tau*f);
     sol_ = 2*sol -sol_;
 
-    ga = compute_sd_rof_pd_gap(nabla, sol, p, f, param.alpha, M, N);
+    ga = compute_sd_rof_pd_gap(nabla, nablat, sol, p, f, param.alpha, M, N);
 
     gap = [gap, ga];
 

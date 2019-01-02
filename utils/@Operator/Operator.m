@@ -4,12 +4,11 @@ classdef Operator
     %   handling operators numerically.
 
     properties
-        
+
     end
 
     methods (Abstract)
-        eval(x);
-        eval_conj(x);
-        bound();
+        val(x);
+        conj(x);
     end
 end

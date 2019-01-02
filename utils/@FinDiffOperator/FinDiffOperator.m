@@ -5,11 +5,10 @@ classdef FinDiffOperator < MatrixOperator
     properties
         Dim
         Method
+        Weight
         UseOpt
         UseMex
         CVXVersion
-        Bound
-        LowerBound
     end
 
     methods
@@ -21,7 +20,6 @@ classdef FinDiffOperator < MatrixOperator
             obj.UseOpt = true;
             obj.UseMex = true;
             obj.CVXVersion = true;
-            obj.Bound = obj.bound();
         end
 
         function fn = selmex(usemex,cvxversion,fast,normal)
@@ -37,41 +35,42 @@ classdef FinDiffOperator < MatrixOperator
 
         end
 
-        function outputArg = eval(obj,x)
+        function op_val = val(obj,x)
             %EVAL Evaluation of the operator
             %   Detailed explanation goes here
-            if obj.UseOpt && obj.Method(1)=='f' && obj.Method(2)=='n'
-                outputArg = fwddiff(x);
-            elseif obj.UseOpt && obj.Method(1)=='b' && obj.Method(2)=='n'
-                outputArg = bwddiff(x);
-            elseif obj.UseOpt && obj.Method(1)=='c' && obj.Method(2)=='n'
-                outputArg = ctrdiff(x);
+            if useopt && method(1)=='f' && method(2)=='n'
+                op_val = obj.selmex(usemex, cvxversion, weight*fastdiff(x, 'gfn'), weight*fwddiff(x));
+            elseif useopt && method(1)=='b' && method(2)=='n'
+                op_val = weight*bwddiff(x);
+            elseif useopt && method(1)=='c' && method(2)=='n'
+                op_val = weight*ctrdiff(x);
             else
-                grad = diff2d(dim,obj.Method);
-                outputArg = reshape(grad*x(:),[dim,2]);
+                dualdim=[dim, 2];
+                grad=weight*diff2d(dim, method);
+                op_val=weight*reshape(grad*x(:), dualdim);
             end
 
         end
 
-        function outputArg = eval_conj(obj,y)
+        function op_conj = conj(obj,y)
             %EVAL_CONJ Evaluation of the conjugate of the operator
             %   Detailed explanation goes here
-            if obj.UseOpt && obj.Method(1)=='f' && obj.Method(2)=='n'
-                outputArg = fwddiff_conj(y);
-            elseif obj.UseOpt && obj.Method(1)=='b' && obj.Method(2)=='n'
-                outputArg = bwddiff_conj(y);
-            elseif obj.UseOpt && obj.Method(1)=='c' && obj.Method(2)=='n'
-                outputArg = ctrdiff_conj(y);
+            if useopt && method(1)=='f' && method(2)=='n'
+                op_conj=obj.selmex(usemex, cvxversion, weight*fastdiff(y, '*fn'), weight*fwddiff_conj(y));
+            elseif useopt && method(1)=='b' && method(2)=='n'
+                op_conj = weight*bwddiff_conj(y);
+            elseif useopt && method(1)=='c' && method(2)=='n'
+                op_conj = weight*ctrdiff_conj(y);
             else
-                grad = diff2d(dim,obj.Method);
-                outputArg = reshape(grad*x(:),[dim,2]);
+                grad = weight*diff2d(dim, method);
+                op_conj = weight*reshape(grad'*y(:), dim);
             end
         end
 
-        function outputArg = matrix(obj)
+        function grad = matrix(obj)
             %MATRIX Return a matrix representation of the operator
             %   Detailed explanation goes here
-            outputArg = diff2d(obj.Dim,obj.Method);
+            grad = diff2d(obj.Dim,obj.Method);
         end
 
         function bnd = bound(obj)
