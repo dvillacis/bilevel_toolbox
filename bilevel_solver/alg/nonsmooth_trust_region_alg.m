@@ -156,7 +156,7 @@ function [xi,step] = tr_subproblem_complex(grad,hess,radius)
   %b = [zeros(m,1);radius*ones(2*n,1)];
   b = zeros(m,1);
   A = [-ones(m,1),grad];
-  quadsol = quadprog(H,f,A,b,[],[],[],[],[],opts);
+  quadsol = quadprog(H,f,A,b,[],[],[],[],[],opts); %TODO: Revisar exitflag para ver si no hubo errores
   xi = quadsol(1);
   step = quadsol(2:end);
 end
