@@ -139,23 +139,26 @@ end
 %   B = B + alpha*u - beta*v;
 % end
 
-function A = constraints_matrix(grad)
-  [m,n] = size(grad);
-  A1 = [-ones(m,1) grad];
-  A2 = [zeros(n,1) eye(n)];
-  A3 = [zeros(n,1) -eye(n)];
-  A = [A1;A2;A3];
-end
+% function A = constraints_matrix(grad)
+%   [m,n] = size(grad);
+%   A1 = [-ones(m,1) grad];
+%   A2 = [zeros(n,1) eye(n)];
+%   A3 = [zeros(n,1) -eye(n)];
+%   A = [A1;A2;A3];
+% end
 
-function [xi,step] = tr_subproblem_complex(grad,radius)
-  options = optimset('Display','none');
+function [xi,step] = tr_subproblem_complex(grad,hess,radius)
+  opts = optimoptions('quadprog','Algorithm','interior-point-convex','Display','none');
   [m,n] = size(grad);
-  c = [1;zeros(n,1)];
-  b = [zeros(m,1);radius*ones(2*n,1)];
-  A = constraints_matrix(grad);
-  linsol = linprog(c,A,b,[],[],[],[],[],options);
-  xi = linsol(1);
-  step = linsol(2:end);
+  B = spdiags(ones(n+1,1),1,m,n+1);
+  H = B'*hess*B;
+  f = [1;zeros(n,1)];
+  %b = [zeros(m,1);radius*ones(2*n,1)];
+  b = zeros(m,1);
+  A = [-ones(m,1),grad];
+  quadsol = quadprog(H,f,A,b,[],[],[],[],[],opts);
+  xi = quadsol(1);
+  step = quadsol(2:end);
 end
 
 function xi = tr_complex_stationarity_measure(grad)
