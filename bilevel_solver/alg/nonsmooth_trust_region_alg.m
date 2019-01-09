@@ -11,8 +11,7 @@ function [sol,s,param] = nonsmooth_trust_region_initialize(x_0,lower_level_probl
   sol = x_0;
   s.radius = param.radius;
   s.hess = 0;
-  %s.yold = lower_level_problem.solve(sol);
-  %s.gradold = upper_level_problem.adjoint(s.yold,sol);
+  s.res = 1;
 
   % Test if the min radius is defined
   if ~isfield(param,'minradius')
@@ -33,82 +32,86 @@ end
 
 function [sol,s] = nonsmooth_trust_region_algorithm(lower_level_problem,upper_level_problem,sol,s,param)
 
-  % Solving the state equation (lower level solver)
-  y = lower_level_problem.solve(sol);
-  y = y(:);
+    % Solving the state equation (lower level solver)
+    y = lower_level_problem.solve(sol);
+    y = y(:);
 
-  % Solving the gradient
-  s.grad = upper_level_problem.gradient(y,sol,s.radius);
+    % Solving the gradient
+    s.grad = upper_level_problem.gradient(y,sol,s.radius);
 
-  % Getting current cost
-  cost = upper_level_problem.eval(y,sol);
+    % Getting current cost
+    cost = upper_level_problem.eval(y,sol);
 
-  if s.radius >= param.minradius
-    % Get BFGS Matrix
-    % dy = y-s.yold;
-    % %tt = hess*dy;
-    % dgrad = s.grad-s.gradold;
-    % if norm(y-s.yold) ~= 0
-    %   s.hess = bfgs(s.hess,dgrad,dy);
-    % end
+    if s.radius >= param.minradius
 
-    % Trust Region Step Calculation (Solving TR Subproblem)
-    step = tr_subproblem(s.grad,s.hess,s.radius);
+        % Hessian Matrix approximation
+        if isfield(s,'yprev') && norm(s.hess)~= 0
+            if s.yprev ~= y
+                dy = y-s.yprev;
+                tt = s.hess*dy;
+                r = s.grad-s.gradprev;
+                if s.res ~= 0
+                    s.hess = s.hess-1/(dy'*tt)*(tt.^2)+1/(dy'*r)*(r.^2);
+                end
+            end
+        end
 
-    % Record previous step
-    s.yold = y;
-    s.gradold = s.grad;
+        % Trust Region Step Calculation (Solving TR Subproblem)
+        step = tr_subproblem(s.grad,s.hess,s.radius);
 
-    % Trust Region Modification
-    pred = -s.grad'*step-0.5*step'*s.hess*step;
-    next_y = lower_level_problem.solve(sol+step);
-    next_cost = upper_level_problem.eval(next_y,sol+step);
-    ared = cost-next_cost;
-    rho = ared/pred;
+        % Record previous step
+        s.yprev = y;
+        s.gradprev = s.grad;
+        
+        % Trust Region Modification
+        pred = -s.grad'*step-0.5*step'*s.hess*step;
+        next_y = lower_level_problem.solve(sol+step);
+        next_cost = upper_level_problem.eval(next_y,sol+step);
+        ared = cost-next_cost;
+        rho = ared/pred;
 
-    % Change size of the region
-    if rho > param.eta2
-      sol = sol + step;
-      s.radius = param.gamma2*s.radius;
-    elseif rho <= param.eta1
-      s.radius = param.gamma1*s.radius;
+        % Change size of the region
+        if rho > param.eta2
+          sol = sol + step;
+          s.radius = param.gamma2*s.radius;
+        elseif rho <= param.eta1
+          s.radius = param.gamma1*s.radius;
+        else
+          %sol = sol + step;
+          s.radius = param.gamma1*s.radius;
+        end
+
+        fprintf('sol = %f, grad = %f, radius = %f, rho = %f, step = %f, hess = %f\n',sol,norm(s.grad),s.radius,rho,norm(step),s.hess);
+
     else
-      %sol = sol + step;
-      s.radius = param.gamma1*s.radius;
+
+        [xi,step] = tr_subproblem_complex(s.grad,s.hess,s.radius);
+        psi = tr_complex_stationarity_measure(s.grad,s.hess);
+
+        % Record previous step
+%         s.yold = y;
+%         s.gradold = s.grad;
+
+        % Trust Region Modification
+        pred = -xi;
+        next_y = lower_level_problem.solve(sol+step);
+        next_cost = upper_level_problem.eval(next_y,sol+step);
+        ared = cost-next_cost;
+        rho = ared/pred;
+
+        % Change size of the region
+        if rho > param.eta2
+          sol = sol + step;
+          s.radius = param.gamma2*s.radius;
+        elseif rho <= param.eta1
+          s.radius = param.gamma1*s.radius;
+        else
+          %sol = sol + step;
+          s.radius = param.gamma1*s.radius;
+        end
+
+        fprintf('COMPLEX: sol = %f, grad = %f, radius = %f, rho = %f, step = %f, psi=%f\n',sol,norm(s.grad),s.radius,rho,norm(step),psi);
     end
-
-    fprintf('sol = %f, grad = %f, radius = %f, rho = %f, step = %f\n',sol,norm(s.grad),s.radius,rho,step);
-
-  else
-
-    [xi,step] = tr_subproblem_complex(s.grad,s.radius);
-    stationarity = tr_complex_stationarity_measure(s.grad);
-
-    % Record previous step
-    s.yold = y;
-    s.gradold = s.grad;
-
-    % Trust Region Modification
-    pred = -xi;
-    next_y = lower_level_problem.solve(sol+step);
-    next_cost = upper_level_problem.eval(next_y,sol+step);
-    ared = cost-next_cost;
-    rho = ared/pred;
-
-    % Change size of the region
-    if rho > param.eta2
-      sol = sol + step;
-      s.radius = param.gamma2*s.radius;
-    elseif rho <= param.eta1
-      s.radius = param.gamma1*s.radius;
-    else
-      %sol = sol + step;
-      s.radius = param.gamma1*s.radius;
-    end
-
-    fprintf('COMPLEX: sol = %f, grad = %f, radius = %f, rho = %f, step = %f, stat = %f\n',sol,norm(s.grad),s.radius,rho,step,stationarity);
-  end
-
 end
 
 function step = tr_subproblem(grad,hess,radius)
@@ -131,38 +134,28 @@ function step = tr_subproblem(grad,hess,radius)
   end
 end
 
-% function B = bfgs(B,y,s)
-%   alpha = 1/(y'*s);
-%   beta = 1/(s'*B*s);
-%   u = y*y';
-%   v = (B*s)*(s'*B');
-%   B = B + alpha*u - beta*v;
-% end
-
-% function A = constraints_matrix(grad)
-%   [m,n] = size(grad);
-%   A1 = [-ones(m,1) grad];
-%   A2 = [zeros(n,1) eye(n)];
-%   A3 = [zeros(n,1) -eye(n)];
-%   A = [A1;A2;A3];
-% end
-
-function [xi,step] = tr_subproblem_complex(grad,hess,radius)
-  opts = optimoptions('quadprog','Algorithm','interior-point-convex','Display','none');
-  [m,n] = size(grad);
-  B = spdiags(ones(n+1,1),1,m,n+1);
-  H = B'*hess*B;
-  f = [1;zeros(n,1)];
-  %b = [zeros(m,1);radius*ones(2*n,1)];
-  b = zeros(m,1);
-  A = [-ones(m,1),grad];
-  quadsol = quadprog(H,f,A,b,[],[],[],[],[],opts); %TODO: Revisar exitflag para ver si no hubo errores
-  xi = quadsol(1);
-  step = quadsol(2:end);
+function [c,ceq] = norm_constraint(x,radius)
+    c = norm(x)-radius;
+    ceq = [];
 end
 
-function xi = tr_complex_stationarity_measure(grad)
-  [xi, ~] = tr_subproblem_complex(grad,1);
+function [xi,step] = tr_subproblem_complex(grad,hess,radius)
+    [m,n] = size(grad);
+    B = spdiags(ones(n+1,1),1,m,n+1);
+    H = B'*hess*B;
+    f = [1;zeros(n,1)];
+    b = zeros(m,1);
+    A = [-ones(m,1),grad];
+    obj = @(x) 0.5*x'*H*x + f'*x;
+    nonloc = @(x) norm_constraint(x,radius);
+    options = optimoptions('fmincon','Display','none'); 
+    [x,fval] = fmincon(obj,[0;0],A,b,[],[],[],[],nonloc,options);
+    xi = x(1);
+    step = x(2:end);
+end
+
+function xi = tr_complex_stationarity_measure(grad,hess)
+  [xi, ~] = tr_subproblem_complex(grad,hess,1);
   xi = -xi;
 end
 

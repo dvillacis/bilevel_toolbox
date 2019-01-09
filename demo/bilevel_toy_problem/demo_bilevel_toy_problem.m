@@ -15,7 +15,7 @@ upper_level_problem.eval = @(y,u) 0.5*norm(y-zd).^2 + 0.5*alpha*norm(u).^2;
 upper_level_problem.gradient = @(y,u,radius) solve_gradient(y,u,radius,zd,alpha,A);
 
 % Initial control
-u = -5;
+u = 5;
 
 % Plotting the bilevel cost function
 lb = -3;
@@ -32,7 +32,7 @@ hold on;
 % Define bilevel parameters
 bilevel_param.verbose = 2;
 bilevel_param.maxit = 1000;
-bilevel_param.tol = 1e-4;
+bilevel_param.tol = 1e-3;
 bilevel_param.algo = 'NONSMOOTH_TRUST_REGION';
 bilevel_param.radius = 1;
 bilevel_param.minradius = 0.1;

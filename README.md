@@ -17,7 +17,7 @@ This struct contains the ADJOINT method as well as a EVAL that uses the output f
 ```matlab
 % Define upper level problem
 upper_level_problem.eval = @(y,u,zd,alpha) 0.5*norm(y-zd).^2 + 0.5*alpha*norm(u).^2;
-upper_level_problem.adjoint = @(y,u,zd,alpha) solve_adjoint_upper_level(y,u,zd,alpha);
+upper_level_problem.grad = @(y,u,zd,alpha) solve_grad_upper_level(y,u,zd,alpha);
 ```
 
 ## Bilevel Solver

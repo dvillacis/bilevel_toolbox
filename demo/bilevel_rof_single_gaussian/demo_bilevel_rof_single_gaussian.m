@@ -17,6 +17,7 @@ lower_level_problem.solve = @(alpha) solve_lower_level(alpha,noisy);
 % Define upper level problem
 upper_level_problem.eval = @(u,alpha) 0.5*norm(u(:)-original(:)).^2;
 upper_level_problem.gradient = @(u,alpha,radius) solve_gradient(u,alpha,radius,original);
+upper_level_problem.dataset = dataset;
 
 %% Solving the bilevel problem
 bilevel_param.verbose = 2;
@@ -45,7 +46,7 @@ imagesc_gray(optimal_sol,1,'Denoised Image');
 %% Auxiliary functions
 
 function y = solve_lower_level(alpha,noisy)
-  param_lower_level.maxit = 2000;
+  param_lower_level.maxiter = 2000;
   param_lower_level.alpha = alpha;
   param_lower_level.verbose = 0;
   y = solve_rof_cp_single_gaussian(noisy,param_lower_level);
