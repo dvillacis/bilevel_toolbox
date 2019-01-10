@@ -18,8 +18,8 @@ upper_level_problem.gradient = @(y,u,radius) solve_gradient(y,u,radius,zd,alpha,
 u = 5;
 
 % Plotting the bilevel cost function
-lb = -3;
-ub = 3;
+lb = -2;
+ub = 2;
 c = [];
 for uu = lb:0.01:ub
   yy = lower_level_problem.solve(uu);
@@ -35,11 +35,11 @@ bilevel_param.maxit = 1000;
 bilevel_param.tol = 1e-3;
 bilevel_param.algo = 'NONSMOOTH_TRUST_REGION';
 bilevel_param.radius = 1;
-bilevel_param.minradius = 0.1;
+bilevel_param.minradius = 0.01;
 bilevel_param.gamma1 = 0.5;
 bilevel_param.gamma2 = 1.5;
 bilevel_param.eta1 = 0.01;
-bilevel_param.eta2 = 0.93;
+bilevel_param.eta2 = 0.90;
 
 % Solve the bilevel problem
 [sol,info] = solve_bilevel(u,lower_level_problem,upper_level_problem,bilevel_param);

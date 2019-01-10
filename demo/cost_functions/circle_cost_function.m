@@ -17,7 +17,7 @@ noisy = dataset.get_corrupt(1);
 lower_level_problem.solve = @(alpha) solve_lower_level(alpha,noisy);
 
 c = [];
-r = 0.01:0.001:0.2;
+r = 0.01:0.001:0.1;
 i=1;
 for a = r
     sol = lower_level_problem.solve(a);
@@ -32,7 +32,7 @@ end
 plot(r,c)
 
 function y = solve_lower_level(alpha,noisy)
-  param_lower_level.maxit = 1000;
+  param_lower_level.maxiter = 1000;
   param_lower_level.alpha = alpha;
   param_lower_level.verbose = 0;
   y = solve_rof_cp_single_gaussian(noisy,param_lower_level);

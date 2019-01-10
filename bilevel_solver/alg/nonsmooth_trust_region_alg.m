@@ -10,7 +10,7 @@ function [sol,s,param] = nonsmooth_trust_region_initialize(x_0,lower_level_probl
   s.x_n = {};
   sol = x_0;
   s.radius = param.radius;
-  s.hess = 0;
+  s.hess = 1;
   s.res = 1;
 
   % Test if the min radius is defined
@@ -30,6 +30,14 @@ function [sol,s,param] = nonsmooth_trust_region_initialize(x_0,lower_level_probl
 
 end
 
+function B = bfgs(B,y,s)
+  alpha = 1/(y'*s);
+  beta = 1/(s'*B*s);
+  u = y*y';
+  v = (B*s)*(s'*B');
+  B = B + alpha*u - beta*v;
+end
+
 function [sol,s] = nonsmooth_trust_region_algorithm(lower_level_problem,upper_level_problem,sol,s,param)
 
     % Solving the state equation (lower level solver)
@@ -44,15 +52,14 @@ function [sol,s] = nonsmooth_trust_region_algorithm(lower_level_problem,upper_le
 
     if s.radius >= param.minradius
 
+        s.grad = min(s.grad);
+        
         % Hessian Matrix approximation
-        if isfield(s,'yprev') && norm(s.hess)~= 0
-            if s.yprev ~= y
-                dy = y-s.yprev;
-                tt = s.hess*dy;
+        if isfield(s,'costprev') && norm(s.hess)~= 0
+            if s.costprev - cost ~= 0
+                dcost = cost - s.costprev;
                 r = s.grad-s.gradprev;
-                if s.res ~= 0
-                    s.hess = s.hess-1/(dy'*tt)*(tt.^2)+1/(dy'*r)*(r.^2);
-                end
+                s.hess = bfgs(s.hess,dcost,r);
             end
         end
 
@@ -60,10 +67,12 @@ function [sol,s] = nonsmooth_trust_region_algorithm(lower_level_problem,upper_le
         step = tr_subproblem(s.grad,s.hess,s.radius);
 
         % Record previous step
-        s.yprev = y;
+        %s.yprev = y;
+        s.costprev = cost;
         s.gradprev = s.grad;
         
         % Trust Region Modification
+        
         pred = -s.grad'*step-0.5*step'*s.hess*step;
         next_y = lower_level_problem.solve(sol+step);
         next_cost = upper_level_problem.eval(next_y,sol+step);
