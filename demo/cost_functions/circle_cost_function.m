@@ -17,7 +17,7 @@ noisy = dataset.get_corrupt(1);
 lower_level_problem.solve = @(alpha) solve_lower_level(alpha,noisy);
 
 c = [];
-r = 0.01:0.001:0.1;
+r = 0.01:0.01:5;
 i=1;
 for a = r
     sol = lower_level_problem.solve(a);

@@ -10,7 +10,7 @@ function [sol,s,param] = nonsmooth_trust_region_initialize(x_0,lower_level_probl
   s.x_n = {};
   sol = x_0;
   s.radius = param.radius;
-  s.hess = 1;
+  s.hess = 0.1;
   s.res = 1;
 
   % Test if the min radius is defined
@@ -30,14 +30,6 @@ function [sol,s,param] = nonsmooth_trust_region_initialize(x_0,lower_level_probl
 
 end
 
-function B = bfgs(B,y,s)
-  alpha = 1/(y'*s);
-  beta = 1/(s'*B*s);
-  u = y*y';
-  v = (B*s)*(s'*B');
-  B = B + alpha*u - beta*v;
-end
-
 function [sol,s] = nonsmooth_trust_region_algorithm(lower_level_problem,upper_level_problem,sol,s,param)
 
     % Solving the state equation (lower level solver)
@@ -52,14 +44,14 @@ function [sol,s] = nonsmooth_trust_region_algorithm(lower_level_problem,upper_le
 
     if s.radius >= param.minradius
 
-        s.grad = min(s.grad);
+        s.grad = max(s.grad);
         
         % Hessian Matrix approximation
-        if isfield(s,'costprev') && norm(s.hess)~= 0
-            if s.costprev - cost ~= 0
-                dcost = cost - s.costprev;
-                r = s.grad-s.gradprev;
-                s.hess = bfgs(s.hess,dcost,r);
+        if isfield(s,'solprev') && norm(s.hess)~= 0
+            dsol = sol - s.solprev;
+            r = s.grad-s.gradprev;
+            if s.solprev - sol ~= 0 && dsol'*r > 0
+                s.hess = bfgs(s.hess,dsol,r);
             end
         end
 
@@ -67,12 +59,10 @@ function [sol,s] = nonsmooth_trust_region_algorithm(lower_level_problem,upper_le
         step = tr_subproblem(s.grad,s.hess,s.radius);
 
         % Record previous step
-        %s.yprev = y;
-        s.costprev = cost;
+        s.solprev = sol;
         s.gradprev = s.grad;
         
         % Trust Region Modification
-        
         pred = -s.grad'*step-0.5*step'*s.hess*step;
         next_y = lower_level_problem.solve(sol+step);
         next_cost = upper_level_problem.eval(next_y,sol+step);
@@ -97,17 +87,18 @@ function [sol,s] = nonsmooth_trust_region_algorithm(lower_level_problem,upper_le
         [xi,step] = tr_subproblem_complex(s.grad,s.hess,s.radius);
         psi = tr_complex_stationarity_measure(s.grad,s.hess);
 
-        % Record previous step
-%         s.yold = y;
-%         s.gradold = s.grad;
-
         % Trust Region Modification
-        pred = -xi;
+        pred = -xi-0.5*step'*s.hess*step;
         next_y = lower_level_problem.solve(sol+step);
         next_cost = upper_level_problem.eval(next_y,sol+step);
         ared = cost-next_cost;
-        rho = ared/pred;
-
+        
+        if (psi > norm(s.grad)*s.radius)
+            rho = ared/pred;
+        else
+            rho = 0;
+        end
+        
         % Change size of the region
         if rho > param.eta2
           sol = sol + step;

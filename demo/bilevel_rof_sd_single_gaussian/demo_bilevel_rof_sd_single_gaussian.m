@@ -21,16 +21,16 @@ upper_level_problem.dataset = dataset;
 
 %% Solving the bilevel problem
 bilevel_param.verbose = 2;
-bilevel_param.maxit = 100;
+bilevel_param.maxit = 1000;
 bilevel_param.tol = 1e-7;
 bilevel_param.algo = 'NONSMOOTH_TRUST_REGION';
-bilevel_param.radius = 0.1;
+bilevel_param.radius = 1.0;
 bilevel_param.minradius = 0.01;
 bilevel_param.gamma1 = 0.5;
 bilevel_param.gamma2 = 2.0;
 bilevel_param.eta1 = 0.01;
-bilevel_param.eta2 = 0.90;
-alpha = 1.0;
+bilevel_param.eta2 = 0.10;
+alpha = 6.0;
 [sol,info] = solve_bilevel(alpha,lower_level_problem,upper_level_problem,bilevel_param);
 
 optimal_sol = solve_lower_level(sol,noisy);
@@ -93,5 +93,5 @@ function grad = solve_gradient(u,alpha,~,original)
   % Calculating the gradient
   Kp = nabla*adj;
   aux = Inact*(Ku./denominador);
-  grad = alpha*0.0001*m*n - aux'*Kp;
+  grad = alpha*0.001*m*n - aux'*Kp;
 end
