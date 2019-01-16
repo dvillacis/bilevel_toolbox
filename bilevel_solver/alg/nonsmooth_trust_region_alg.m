@@ -10,7 +10,7 @@ function [sol,s,param] = nonsmooth_trust_region_initialize(x_0,lower_level_probl
   s.x_n = {};
   sol = x_0;
   s.radius = param.radius;
-  s.hess = 0.1;
+  s.hess = 0;
   s.res = 1;
 
   % Test if the min radius is defined
@@ -155,7 +155,7 @@ function [xi,step] = tr_subproblem_complex(grad,hess,radius)
 end
 
 function xi = tr_complex_stationarity_measure(grad,hess)
-  [xi, ~] = tr_subproblem_complex(grad,hess,1);
+  [xi, ~] = tr_subproblem_complex(grad,0,1);
   xi = -xi;
 end
 
