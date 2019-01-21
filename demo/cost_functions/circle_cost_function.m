@@ -17,13 +17,13 @@ noisy = dataset.get_corrupt(1);
 lower_level_problem.solve = @(alpha) solve_lower_level(alpha,noisy);
 
 c = [];
-r = 0.01:0.01:5;
+r = 5:0.5:11;
 i=1;
 for a = r
     sol = lower_level_problem.solve(a);
     cost = 0.5*norm(original(:)-sol(:)).^2;
     c = [c cost];
-    if mod(i,31)==0
+    if mod(i,3)==0
         fprintf('Finished %.3f with cost %f\n',a,cost);
     end
     i=i+1;
@@ -31,9 +31,23 @@ end
 
 plot(r,c)
 
-function y = solve_lower_level(alpha,noisy)
-  param_lower_level.maxiter = 1000;
-  param_lower_level.alpha = alpha;
-  param_lower_level.verbose = 0;
-  y = solve_rof_cp_single_gaussian(noisy,param_lower_level);
+function sol = solve_lower_level(lambda,noisy)
+    %% Solving the Lower Level Problem
+    param_solver.verbose = 0;
+    param_solver.tol = 1e-5;
+
+    %% Define the cell matrices
+    [M,N] = size(noisy);
+    K = speye(M*N);
+    z = noisy(:);
+    %lambda = 3;
+    gradient = FinDiffOperator([M,N],'fn');
+    B = gradient.matrix();
+    q = zeros(2*M*N,1);
+    alpha = 1;
+
+    gamma = 0; % NO Huber regularization
+
+    %% Call the solver
+    [sol,~] = solve_generic_l1_l2(lambda,{alpha},{K},{B},z,q,gamma,0*noisy(:),param_solver);
 end

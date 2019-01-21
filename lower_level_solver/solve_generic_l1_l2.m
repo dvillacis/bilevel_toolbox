@@ -23,7 +23,7 @@ function [sol,gap] = solve_generic_l1_l2(lambda,alpha,Ks,Bs,z,q,gamma,xinit,para
 
   % Test maxiter parameter
   if ~isfield(param,'maxiter')
-    param.maxiter = 1000;
+    param.maxiter = 5000;
   end
 
   % Test check parameter
@@ -81,6 +81,8 @@ function [sol,gap] = solve_generic_l1_l2(lambda,alpha,Ks,Bs,z,q,gamma,xinit,para
   if param.verbose > 1
     fprintf('generic_l1_l2: iter = %4d, gap = %f\n', 0, gap(1));
   end
+  
+  finished = 0;
 
   for k = 1:param.maxiter
 
@@ -104,14 +106,22 @@ function [sol,gap] = solve_generic_l1_l2(lambda,alpha,Ks,Bs,z,q,gamma,xinit,para
 
     % Stopping criteria
     if ga < param.tol
-        fprintf('generic_l1_l2: ga = %f, stopping criteria met.\n',ga);
+        %fprintf('generic_l1_l2: ga = %f, stopping criteria met.\n',ga);
+        % Print summary
+        if param.verbose>0
+            fprintf(['\n ','GENERIC_L1_L2_CHAMBOLLE_POCK',':\n']);
+            fprintf(' %i iterations\n', k);
+            fprintf(' Primal-Dual Pseudo-Gap: %f \n', gap(end));
+            fprintf(' Execution Time: %f \n\n', toc(t1));
+        end
+        finished = 1;
         break;
     end
 
   end
 
   % Print summary
-  if param.verbose>0
+  if param.verbose>0 && finished == 0
     fprintf(['\n ','GENERIC_L1_L2_CHAMBOLLE_POCK',':\n']);
     fprintf(' %i iterations\n', k);
     fprintf(' Primal-Dual Pseudo-Gap: %f \n', gap(end));
