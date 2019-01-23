@@ -12,11 +12,11 @@ original = dataset.get_target(1);
 noisy = dataset.get_corrupt(1);
 
 % Define lower level problem
-lower_level_problem.solve = @(alpha) solve_lower_level(alpha,noisy);
+lower_level_problem.solve = @(lambda) solve_lower_level(lambda,noisy);
 
 % Define upper level problem
-upper_level_problem.eval = @(u,alpha) 0.5*norm(u(:)-original(:)).^2;
-upper_level_problem.gradient = @(u,alpha,radius) solve_gradient(u,alpha,radius,original);
+upper_level_problem.eval = @(u,lambda) 0.5*norm(u(:)-original(:)).^2 + 0.0001*norm(lambda);
+upper_level_problem.gradient = @(u,lambda,radius) solve_gradient(u,lambda,radius,original,noisy);
 upper_level_problem.dataset = dataset;
 
 %% Solving the bilevel problem
@@ -25,16 +25,18 @@ bilevel_param.maxit = 100;
 bilevel_param.tol = 1e-7;
 bilevel_param.algo = 'NONSMOOTH_TRUST_REGION';
 bilevel_param.radius = 0.1;
-bilevel_param.minradius = 0.01;
+bilevel_param.minradius = 0.00001;
 bilevel_param.gamma1 = 0.5;
 bilevel_param.gamma2 = 1.5;
 bilevel_param.eta1 = 0.01;
-bilevel_param.eta2 = 0.90;
-alpha = 1.0;
-[sol,info] = solve_bilevel(alpha,lower_level_problem,upper_level_problem,bilevel_param);
+bilevel_param.eta2 = 0.80;
+lambda = 10.0;
+[sol,info] = solve_bilevel(lambda,lower_level_problem,upper_level_problem,bilevel_param);
 
 optimal_sol = solve_lower_level(sol,noisy);
 %% Plotting the solution
+[M,N]=size(original);
+optimal_sol = reshape(optimal_sol,M,N);
 figure(1)
 subplot(1,3,1)
 imagesc_gray(original,1,'Original Image');
@@ -45,11 +47,19 @@ imagesc_gray(optimal_sol,1,'Denoised Image');
 
 %% Auxiliary functions
 
-function y = solve_lower_level(alpha,noisy)
-  param_lower_level.maxiter = 2000;
-  param_lower_level.alpha = alpha;
-  param_lower_level.verbose = 0;
-  y = solve_rof_cp_single_gaussian(noisy,param_lower_level);
+function y = solve_lower_level(lambda,noisy)
+  param_solver.verbose = 0;
+  param_solver.maxiter = 3000;
+  %% Define the cell matrices
+  [M,N] = size(noisy);
+  K = speye(M*N);
+  z = noisy(:);
+  gradient = FinDiffOperator([M,N],'fn');
+  B = gradient.matrix();
+  q = zeros(2*M*N,1);
+  alpha = 1;
+  gamma = 0;
+  [y,~] = solve_generic_l1_l2(lambda,{alpha},{K},{B},z,q,gamma,0*noisy(:),param_solver);
 end
 
 function nXi = xi(p,m,n)
@@ -68,30 +78,30 @@ function prod = outer_product(p,q,m,n)
   prod = [spdiags(a,0,m*n,m*n) spdiags(b,0,m*n,m*n); spdiags(c,0,m*n,m*n) spdiags(d,0,m*n,m*n)];
 end
 
-function grad = solve_gradient(u,alpha,~,original)
+function grad = solve_gradient(u,lambda,~,original,noisy)
   % Get the adjoint state
-  [m,n] = size(u);
-  nabla = gradient_matrix(m,n);
+  [M,N] = size(noisy);
+  %u = reshape(u,M,N);
+  nabla = gradient_matrix(M,N);
   Ku = nabla*u(:);
-  nKu = xi(Ku,m,n);
+  nKu = xi(Ku,M,N);
   act = (nKu<1e-7);
   inact = 1-act;
-  Act = spdiags(act,0,2*m*n,2*m*n);
-  Inact = spdiags(inact,0,2*m*n,2*m*n);
+  Act = spdiags(act,0,2*M*N,2*M*N);
+  Inact = spdiags(inact,0,2*M*N,2*M*N);
   denominador = Inact*nKu+act;
-  prodKuKu = outer_product(Ku./(denominador.^3),Ku,m,n);
-  A = speye(m*n);
+  prodKuKu = outer_product(Ku./(denominador.^3),Ku,M,N);
+  A = lambda*speye(M*N);
   B = nabla';
-  C = alpha*Inact*(prodKuKu-spdiags(1./denominador,0,2*m*n,2*m*n))*nabla;
-  D = speye(2*m*n);
+  C = -Inact*(prodKuKu-spdiags(1./denominador,0,2*M*N,2*M*N))*nabla;
+  D = speye(2*M*N);
   E = Act*nabla;
-  F = sparse(2*m*n,2*m*n);
+  F = sparse(2*M*N,2*M*N);
   Adj = [A B;C D;E F];
-  Track = [u(:)-original(:);sparse(4*m*n,1)];
+  Track = [u(:)-original(:);sparse(4*M*N,1)];
   mult = Adj\Track;
-  adj = mult(1:n*m);
+  adj = mult(1:N*M);
   % Calculating the gradient
-  Kp = nabla*adj;
-  aux = Inact*(Ku./denominador);
-  grad = alpha*0.0001*m*n - aux'*Kp;
+  beta = 0.0001;
+  grad = (noisy(:)-u(:))'*adj + beta*lambda;
 end

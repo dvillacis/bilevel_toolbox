@@ -95,7 +95,7 @@ if (nargin == 2)
    window = fspecial('gaussian', 11, 1.5);	%
    K(1) = 0.01;								      % default settings
    K(2) = 0.03;								      %
-   L = 255;                                  %
+   L = 1;                                  %
 end
 
 if (nargin == 3)
