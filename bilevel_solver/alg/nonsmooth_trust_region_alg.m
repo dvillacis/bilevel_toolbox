@@ -80,7 +80,7 @@ function [sol,s] = nonsmooth_trust_region_algorithm(lower_level_problem,upper_le
           s.radius = param.gamma1*s.radius;
         end
 
-        fprintf('sol = %f, grad = %f, radius = %f, rho = %f, step = %f, hess = %f\n',sol,norm(s.grad),s.radius,rho,norm(step),s.hess);
+        fprintf('sol = %f, grad = %f, radius = %f, rho = %f, step = %f\n',sol,norm(s.grad),s.radius,rho,norm(step));
 
     else
 

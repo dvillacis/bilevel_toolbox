@@ -10,7 +10,7 @@ Kbb = cat(1,Ks{:},Bs{:});
 % Calculate primal value
 primal_1 = 0;
 for k=1:length(Ks)
-  primal_1 = primal_1 + lambda .* norm(Ks{k}*x-z).^2;
+  primal_1 = primal_1 + sum(lambda{k} .* norm(Ks{k}*x-z).^2);
 end
 primal_2 = 0;
 for l = 1:length(Bs)
@@ -25,7 +25,7 @@ index = 0;
 dual_1 = 0;
 for k=1:length(Ks)
   n = size(Ks{k},1);
-  dual_1 = dual_1 + 0.25*(1/lambda)*norm(y(index+1:index+n)).^2 + y(index+1:index+n)' * z;
+  dual_1 = dual_1 + sum(0.25*(1./lambda{k}).*(y(index+1:index+n).^2)) + y(index+1:index+n)'*z;
   index = index+n;
 end
 dual_2 = 0;

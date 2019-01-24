@@ -12,11 +12,11 @@ original = dataset.get_target(1);
 noisy = dataset.get_corrupt(1);
 
 % Define lower level problem
-lower_level_problem.solve = @(alpha) solve_lower_level(alpha,noisy);
+lower_level_problem.solve = @(lambda) solve_lower_level(lambda,noisy);
 
 % Define upper level problem
-upper_level_problem.eval = @(u,alpha) 0.5*norm(u(:)-original(:)).^2;
-upper_level_problem.gradient = @(u,alpha,radius) solve_gradient(u,alpha,radius,original);
+upper_level_problem.eval = @(u,lambda) 0.5*norm(u(:)-original(:)).^2 + 0.5*0.0001*norm(lambda).^2;
+upper_level_problem.gradient = @(u,lambda,radius) solve_gradient(u,lambda,radius,original);
 upper_level_problem.dataset = dataset;
 
 %% Solving the bilevel problem

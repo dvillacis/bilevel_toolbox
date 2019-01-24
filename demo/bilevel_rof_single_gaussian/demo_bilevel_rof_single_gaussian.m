@@ -22,15 +22,15 @@ upper_level_problem.dataset = dataset;
 %% Solving the bilevel problem
 bilevel_param.verbose = 2;
 bilevel_param.maxit = 100;
-bilevel_param.tol = 1e-7;
+bilevel_param.tol = 1e-3;
 bilevel_param.algo = 'NONSMOOTH_TRUST_REGION';
-bilevel_param.radius = 0.1;
+bilevel_param.radius = 1.0;
 bilevel_param.minradius = 0.00001;
 bilevel_param.gamma1 = 0.5;
 bilevel_param.gamma2 = 1.5;
 bilevel_param.eta1 = 0.01;
 bilevel_param.eta2 = 0.80;
-lambda = 10.0;
+lambda = 2.0;
 [sol,info] = solve_bilevel(lambda,lower_level_problem,upper_level_problem,bilevel_param);
 
 optimal_sol = solve_lower_level(sol,noisy);
@@ -59,7 +59,7 @@ function y = solve_lower_level(lambda,noisy)
   q = zeros(2*M*N,1);
   alpha = 1;
   gamma = 0;
-  [y,~] = solve_generic_l1_l2(lambda,{alpha},{K},{B},z,q,gamma,0*noisy(:),param_solver);
+  [y,~] = solve_generic_l1_l2({lambda},{alpha},{K},{B},z,q,gamma,0*noisy(:),param_solver);
 end
 
 function nXi = xi(p,m,n)

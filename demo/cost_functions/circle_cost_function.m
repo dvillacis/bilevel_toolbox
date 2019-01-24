@@ -37,6 +37,7 @@ for a = r
     i=i+1;
 end
 
+%% Plotting
 figure
 plot(r,l2_vals);
 
@@ -46,12 +47,13 @@ plot(r,ssim_vals);
 figure
 plot(r,psnr_vals);
 
+%% Auxiliary functions
 function sol = solve_lower_level(lambda,noisy)
-    %% Solving the Lower Level Problem
+    % Solving the Lower Level Problem
     param_solver.verbose = 1;
     param_solver.maxiter = 3000;
 
-    %% Define the cell matrices
+    % Define the cell matrices
     [M,N] = size(noisy);
     K = speye(M*N);
     z = noisy(:);
@@ -63,7 +65,7 @@ function sol = solve_lower_level(lambda,noisy)
 
     gamma = 0; % NO Huber regularization
 
-    %% Call the solver
+    % Call the solver
     [sol,~] = solve_generic_l1_l2(lambda,{alpha},{K},{B},z,q,gamma,0*noisy(:),param_solver);
     sol = reshape(sol,M,N);
 end

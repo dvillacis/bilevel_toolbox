@@ -50,10 +50,15 @@ function [sol,gap] = solve_generic_l1_l2(lambda,alpha,Ks,Bs,z,q,gamma,xinit,para
   if ~iscell(Bs)
     error('Bs must be a cell array.');
   end
-  
+
   % Test for cell input alpha
   if ~iscell(alpha)
       error('alpha must be a cell array.');
+  end
+
+  % Test for cell input alpha
+  if ~iscell(lambda)
+      error('lambda must be a cell array.');
   end
 
   % Test for input vector
@@ -64,7 +69,7 @@ function [sol,gap] = solve_generic_l1_l2(lambda,alpha,Ks,Bs,z,q,gamma,xinit,para
 %   L = sqrt(8+1);
 %   tau = 0.05/L;
 %   sigma = 0.99/(tau*L^2);
-  
+
   L = sqrt(8);
   tau = 0.01;
   sigma = 1/tau/L^2;
@@ -81,7 +86,7 @@ function [sol,gap] = solve_generic_l1_l2(lambda,alpha,Ks,Bs,z,q,gamma,xinit,para
   if param.verbose > 1
     fprintf('generic_l1_l2: iter = %4d, gap = %f\n', 0, gap(1));
   end
-  
+
   finished = 0;
 
   for k = 1:param.maxiter
@@ -134,7 +139,7 @@ function prox = calc_prox(y,z,q,Ks,Bs,lambda,alpha,tau)
     index = 0;
     for k=1:length(Ks)
         n = size(Ks{k},1);
-        y(index+1:index+n) = (y(index+1:index+n)-tau.*z)./(1+0.5*tau*(1./lambda)); % l2 proximal
+        y(index+1:index+n) = (y(index+1:index+n)-tau.*z)./(1+0.5*tau*(1./lambda{k})); % l2 proximal
         index = index + n;
     end
     for l = 1:length(Bs)
