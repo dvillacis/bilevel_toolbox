@@ -43,8 +43,6 @@ function [sol,s] = nonsmooth_trust_region_algorithm(lower_level_problem,upper_le
     cost = upper_level_problem.eval(y,sol);
 
     if s.radius >= param.minradius
-
-        s.grad = max(s.grad);
         
         % Hessian Matrix approximation
         if isfield(s,'solprev') && norm(s.hess)~= 0
@@ -64,9 +62,13 @@ function [sol,s] = nonsmooth_trust_region_algorithm(lower_level_problem,upper_le
         
         % Trust Region Modification
         pred = -s.grad'*step-0.5*step'*s.hess*step;
-        next_y = lower_level_problem.solve(sol+step);
-        next_cost = upper_level_problem.eval(next_y,sol+step);
-        ared = cost-next_cost;
+        if any((sol+step) < 0)
+            ared = 0;
+        else
+            next_y = lower_level_problem.solve(sol+step);
+            next_cost = upper_level_problem.eval(next_y,sol+step);
+            ared = cost-next_cost;
+        end
         rho = ared/pred;
 
         % Change size of the region
@@ -80,7 +82,11 @@ function [sol,s] = nonsmooth_trust_region_algorithm(lower_level_problem,upper_le
           s.radius = param.gamma1*s.radius;
         end
 
-        fprintf('sol = %f, grad = %f, radius = %f, rho = %f, step = %f\n',sol,norm(s.grad),s.radius,rho,norm(step));
+        if isvector(sol)
+            fprintf('norm_sol = %f, norm_grad = %f, radius = %f, rho = %f, step = %f\n',norm(sol),norm(s.grad),s.radius,rho,norm(step));
+        else
+            fprintf('sol = %f, grad = %f, radius = %f, rho = %f, step = %f\n',sol,s.grad,s.radius,rho,step);
+        end
 
     else
 
