@@ -7,7 +7,7 @@ close all;
 clc;
 
 % Init toolbox
-init_bilevel_toolbox();
+%init_bilevel_toolbox();
 
 %% Load dataset
 dataset = DatasetInFolder('data/circle_dataset_single_gaussian','*_circle_original.png','*_circle_noisy.png');
@@ -21,12 +21,13 @@ noisy = dataset.get_corrupt(1);
 param_solver.verbose = 2;
 param_solver.maxiter = 2000;
 param_solver.tol = 1e-2;
+param_solver.check = 2;
 
 %% Define the cell matrices
 [M,N] = size(original);
 K = speye(M*N);
 z = noisy(:);
-lambda = 3*reshape(triu(ones(M,N)),M*N,1)+500*reshape(tril(ones(M,N)),M*N,1);
+lambda = 10*reshape(triu(ones(M,N)),M*N,1)+500*reshape(tril(ones(M,N)),M*N,1);
 B = gradient_matrix(M,N);
 q = zeros(2*M*N,1);
 alpha = 1.0*reshape(ones(M,N),M*N,1);

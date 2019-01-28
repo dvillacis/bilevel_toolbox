@@ -10,7 +10,7 @@ Kbb = cat(1,Ks{:},Bs{:});
 % Calculate primal value
 primal_1 = 0;
 for k=1:length(Ks)
-  primal_1 = primal_1 + sum(lambda{k} .* norm(Ks{k}*x-z).^2);
+  primal_1 = primal_1 + sum(lambda{k} .* ((Ks{k}*x-z).^2));
 end
 primal_2 = 0;
 for l = 1:length(Bs)
