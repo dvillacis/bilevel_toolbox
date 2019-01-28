@@ -55,6 +55,9 @@ function [sol,s] = nonsmooth_trust_region_algorithm(lower_level_problem,upper_le
 
         % Trust Region Step Calculation (Solving TR Subproblem)
         step = tr_subproblem(s.grad,s.hess,s.radius);
+        
+        % Project the step to the positive quadrant
+        step(sol+step < 0) = 0;
 
         % Record previous step
         s.solprev = sol;
@@ -62,13 +65,9 @@ function [sol,s] = nonsmooth_trust_region_algorithm(lower_level_problem,upper_le
         
         % Trust Region Modification
         pred = -s.grad'*step-0.5*step'*s.hess*step;
-        if any((sol+step) < 0)
-            ared = 0;
-        else
-            next_y = lower_level_problem.solve(sol+step);
-            next_cost = upper_level_problem.eval(next_y,sol+step);
-            ared = cost-next_cost;
-        end
+        next_y = lower_level_problem.solve(sol+step);
+        next_cost = upper_level_problem.eval(next_y,sol+step);
+        ared = cost-next_cost;
         rho = ared/pred;
 
         % Change size of the region
@@ -82,7 +81,7 @@ function [sol,s] = nonsmooth_trust_region_algorithm(lower_level_problem,upper_le
           s.radius = param.gamma1*s.radius;
         end
 
-        if isvector(sol)
+        if size(sol,1)>1 || size(sol,2)>1
             fprintf('norm_sol = %f, norm_grad = %f, radius = %f, rho = %f, step = %f\n',norm(sol),norm(s.grad),s.radius,rho,norm(step));
         else
             fprintf('sol = %f, grad = %f, radius = %f, rho = %f, step = %f\n',sol,s.grad,s.radius,rho,step);

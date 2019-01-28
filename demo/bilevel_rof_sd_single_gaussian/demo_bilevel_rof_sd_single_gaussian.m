@@ -5,7 +5,8 @@ clc;
 init_bilevel_toolbox();
 
 %% Load dataset
-dataset = DatasetInFolder('data/circle_dataset_single_gaussian','*_circle_original.png','*_circle_noisy.png');
+%dataset = DatasetInFolder('data/circle_dataset_single_gaussian','*_circle_original.png','*_circle_noisy.png');
+dataset = DatasetInFolder('data/smiley','*_smiley_original.png','*_smiley_noisy.png');
 
 %% Load input image
 original = dataset.get_target(1);
@@ -23,15 +24,17 @@ upper_level_problem.dataset = dataset;
 %% Solving the bilevel problem
 bilevel_param.verbose = 2;
 bilevel_param.maxit = 100;
-bilevel_param.tol = 1e-3;
+bilevel_param.tol = 1e-2;
 bilevel_param.algo = 'NONSMOOTH_TRUST_REGION';
 bilevel_param.radius = 0.5;
 bilevel_param.minradius = 0.00001;
 bilevel_param.gamma1 = 0.5;
 bilevel_param.gamma2 = 2.0;
 bilevel_param.eta1 = 0.01;
-bilevel_param.eta2 = 0.60;
-lambda = 1*reshape(ones(M,N),M*N,1); % Initial guess
+bilevel_param.eta2 = 0.70;
+lambda1 = 1*ones(0.5*M*N,1);
+lambda2 = 5*ones(0.5*M*N,1);
+lambda = vertcat(lambda1,lambda2); % Initial guess
 [sol,info] = solve_bilevel(lambda,lower_level_problem,upper_level_problem,bilevel_param);
 
 optimal_sol = solve_lower_level(sol,noisy);
@@ -55,7 +58,7 @@ function y = solve_lower_level(lambda,noisy)
   %% Solving the Lower Level Problem
   param_solver.verbose = 0;
   param_solver.maxiter = 2000;
-  param_solver.tol = 1e-3;
+  param_solver.tol = 1e-2;
 
   %% Define the cell matrices
   [M,N] = size(noisy);
@@ -98,7 +101,7 @@ function grad = solve_gradient(u,lambda,~,original,noisy)
   Inact = spdiags(inact,0,2*m*n,2*m*n);
   denominador = Inact*nKu+act;
   prodKuKu = outer_product(Ku./(denominador.^3),Ku,m,n);
-  A = diag(lambda);
+  A = spdiags(lambda,0,m*n,m*n);
   B = nabla';
   C = -Inact*(prodKuKu-spdiags(1./denominador,0,2*m*n,2*m*n))*nabla;
   D = speye(2*m*n);
