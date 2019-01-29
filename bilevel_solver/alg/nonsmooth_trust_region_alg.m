@@ -33,17 +33,17 @@ end
 function [sol,s] = nonsmooth_trust_region_algorithm(lower_level_problem,upper_level_problem,sol,s,param)
 
     % Solving the state equation (lower level solver)
-    y = lower_level_problem.solve(sol);
-    y = y(:);
+    u = lower_level_problem.solve(sol);
+    u = u(:);
 
     % Solving the gradient
-    s.grad = upper_level_problem.gradient(y,sol,s.radius);
+    s.grad = upper_level_problem.gradient(u,sol,s.radius);
 
     % Getting current cost
-    cost = upper_level_problem.eval(y,sol);
+    cost = upper_level_problem.eval(u,sol);
 
     if s.radius >= param.minradius
-        
+
         % Hessian Matrix approximation
         if isfield(s,'solprev') && norm(s.hess)~= 0
             dsol = sol - s.solprev;
@@ -55,36 +55,39 @@ function [sol,s] = nonsmooth_trust_region_algorithm(lower_level_problem,upper_le
 
         % Trust Region Step Calculation (Solving TR Subproblem)
         step = tr_subproblem(s.grad,s.hess,s.radius);
-        
+
         % Project the step to the positive quadrant
         step(sol+step < 0) = 0;
 
         % Record previous step
         s.solprev = sol;
         s.gradprev = s.grad;
-        
+
         % Trust Region Modification
         pred = -s.grad'*step-0.5*step'*s.hess*step;
-        next_y = lower_level_problem.solve(sol+step);
-        next_cost = upper_level_problem.eval(next_y,sol+step);
+        next_u = lower_level_problem.solve(sol+step);
+        next_cost = upper_level_problem.eval(next_u,sol+step);
         ared = cost-next_cost;
         rho = ared/pred;
+        
+        if size(sol,1)>1 || size(sol,2)>1
+            fprintf('l2_cost = %f, norm_sol = %f, norm_grad = %f, radius = %f, rho = %f\n',cost,norm(sol),norm(s.grad),s.radius,rho);
+        else
+            fprintf('l2_cost = %f, sol = %f, grad = %f, radius = %f, rho = %f\n',cost,sol,s.grad,s.radius,rho);
+        end
 
         % Change size of the region
         if rho > param.eta2
           sol = sol + step;
           s.radius = param.gamma2*s.radius;
+          s.current_l2_cost = next_cost;
         elseif rho <= param.eta1
           s.radius = param.gamma1*s.radius;
+          s.current_l2_cost = cost;
         else
           %sol = sol + step;
           s.radius = param.gamma1*s.radius;
-        end
-
-        if size(sol,1)>1 || size(sol,2)>1
-            fprintf('norm_sol = %f, norm_grad = %f, radius = %f, rho = %f, step = %f\n',norm(sol),norm(s.grad),s.radius,rho,norm(step));
-        else
-            fprintf('sol = %f, grad = %f, radius = %f, rho = %f, step = %f\n',sol,s.grad,s.radius,rho,step);
+          s.current_l2_cost = cost;
         end
 
     else
@@ -97,13 +100,13 @@ function [sol,s] = nonsmooth_trust_region_algorithm(lower_level_problem,upper_le
         next_y = lower_level_problem.solve(sol+step);
         next_cost = upper_level_problem.eval(next_y,sol+step);
         ared = cost-next_cost;
-        
+
         if (psi > norm(s.grad)*s.radius)
             rho = ared/pred;
         else
             rho = 0;
         end
-        
+
         % Change size of the region
         if rho > param.eta2
           sol = sol + step;
@@ -153,7 +156,7 @@ function [xi,step] = tr_subproblem_complex(grad,hess,radius)
     A = [-ones(m,1),grad];
     obj = @(x) 0.5*x'*H*x + f'*x;
     nonloc = @(x) norm_constraint(x,radius);
-    options = optimoptions('fmincon','Display','none'); 
+    options = optimoptions('fmincon','Display','none');
     [x,fval] = fmincon(obj,[0;0],A,b,[],[],[],[],nonloc,options);
     xi = x(1);
     step = x(2:end);
