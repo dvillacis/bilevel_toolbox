@@ -17,7 +17,7 @@ noisy = dataset.get_corrupt(1);
 %% Setup for the lower level problem
 lower_level_problem.solve = @(lambda) solve_lower_level(lambda,noisy);
 
-r = 9.5:0.01:9.8;
+r = 9.0:0.1:10;
 l2_vals = zeros(length(r),1);
 ssim_vals = zeros(length(r),1);
 psnr_vals = zeros(length(r),1);
@@ -66,6 +66,6 @@ function sol = solve_lower_level(lambda,noisy)
     gamma = 0; % NO Huber regularization
 
     % Call the solver
-    [sol,~] = solve_generic_l1_l2(lambda,{alpha},{K},{B},z,q,gamma,0*noisy(:),param_solver);
+    [sol,~] = solve_generic_l1_l2({lambda},{alpha},{K},{B},z,q,gamma,0*noisy(:),param_solver);
     sol = reshape(sol,M,N);
 end

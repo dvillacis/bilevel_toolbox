@@ -36,13 +36,14 @@ function [sol,s] = nonsmooth_trust_region_algorithm(lower_level_problem,upper_le
     u = lower_level_problem.solve(sol);
     u = u(:);
 
-    % Solving the gradient
-    s.grad = upper_level_problem.gradient(u,sol,s.radius);
-
     % Getting current cost
     cost = upper_level_problem.eval(u,sol);
 
     if s.radius >= param.minradius
+
+        % Solving the gradient
+        gradient_parameters.complex_model = false;
+        s.grad = upper_level_problem.gradient(u,sol,gradient_parameters);
 
         % Hessian Matrix approximation
         if isfield(s,'solprev') && norm(s.hess)~= 0
@@ -69,7 +70,7 @@ function [sol,s] = nonsmooth_trust_region_algorithm(lower_level_problem,upper_le
         next_cost = upper_level_problem.eval(next_u,sol+step);
         ared = cost-next_cost;
         rho = ared/pred;
-        
+
         if size(sol,1)>1 || size(sol,2)>1
             fprintf('l2_cost = %f, norm_sol = %f, norm_grad = %f, radius = %f, rho = %f\n',cost,norm(sol),norm(s.grad),s.radius,rho);
         else
@@ -91,6 +92,10 @@ function [sol,s] = nonsmooth_trust_region_algorithm(lower_level_problem,upper_le
         end
 
     else
+
+        % Solving the gradient
+        gradient_parameters.complex_model = true;
+        s.grad = upper_level_problem.gradient(u,sol,gradient_parameters);
 
         [xi,step] = tr_subproblem_complex(s.grad,s.hess,s.radius);
         psi = tr_complex_stationarity_measure(s.grad,s.hess);

@@ -18,7 +18,7 @@ lower_level_problem.solve = @(lambda) solve_lower_level(lambda,noisy);
 
 % Define upper level problem
 upper_level_problem.eval = @(u,lambda) 0.5*norm(u(:)-original(:)).^2 + 0.5*0.0001*norm(lambda).^2;
-upper_level_problem.gradient = @(u,lambda,radius) solve_gradient(u,lambda,radius,original,noisy);
+upper_level_problem.gradient = @(u,lambda,params) solve_gradient(u,lambda,original,noisy,params);
 upper_level_problem.dataset = dataset;
 
 %% Solving the bilevel problem
@@ -32,9 +32,10 @@ bilevel_param.gamma1 = 0.5;
 bilevel_param.gamma2 = 2.0;
 bilevel_param.eta1 = 0.01;
 bilevel_param.eta2 = 0.70;
-lambda1 = 1*ones(0.5*M*N,1);
-lambda2 = 5*ones(0.5*M*N,1);
-lambda = vertcat(lambda1,lambda2); % Initial guess
+%lambda1 = 1*ones(0.5*M*N,1);
+%lambda2 = 5*ones(0.5*M*N,1);
+%lambda = vertcat(lambda1,lambda2); % Initial guess
+lambda = 0.1*rand(M*N,1);
 [sol,info] = solve_bilevel(lambda,lower_level_problem,upper_level_problem,bilevel_param);
 
 optimal_sol = solve_lower_level(sol,noisy);
@@ -70,7 +71,7 @@ function y = solve_lower_level(lambda,noisy)
   gamma = 0; % NO Huber regularization
 
   %% Call the solver
-  [y,~] = solve_generic_l1_l2({lambda},{alpha},{K},{B},z,q,gamma,0*noisy(:),param_solver);
+  [y,~] = solve_generic_l1_l2({lambda},{alpha},{K},{B},z,q,gamma,rand(M*N,1),param_solver);
 end
 
 function nXi = xi(p,m,n)
@@ -89,7 +90,7 @@ function prod = outer_product(p,q,m,n)
   prod = [spdiags(a,0,m*n,m*n) spdiags(b,0,m*n,m*n); spdiags(c,0,m*n,m*n) spdiags(d,0,m*n,m*n)];
 end
 
-function grad = solve_gradient(u,lambda,~,original,noisy)
+function grad = solve_gradient(u,lambda,original,noisy,params)
   % Get the adjoint state
   [m,n] = size(u);
   nabla = gradient_matrix(m,n);
