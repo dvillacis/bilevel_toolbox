@@ -79,22 +79,6 @@ function prod = outer_product(p,q,m,n)
     prod = [spdiags(a,0,m*n,m*n) spdiags(b,0,m*n,m*n); spdiags(c,0,m*n,m*n) spdiags(d,0,m*n,m*n)];
 end
 
-function adj = calculate_adjoint(u,Ku,nKu,nabla,lambda,original,Inact,Act,act,M,N)
-
-    denominador = Inact*nKu+act;
-    prodKuKu = outer_product(Ku./(denominador.^3),Ku,M,N);
-    A = lambda*speye(M*N);
-    B = nabla';
-    C = -Inact*(prodKuKu-spdiags(1./denominador,0,2*M*N,2*M*N))*nabla;
-    D = speye(2*M*N);
-    E = Act*nabla;
-    F = sparse(2*M*N,2*M*N);
-    Adj = [A B;C D;E F];
-    Track = [u(:)-original(:);sparse(4*M*N,1)];
-    mult = Adj\Track;
-    adj = mult(1:N*M);
-end
-
 function grad = solve_gradient(u,lambda,original,noisy,params)
 
     [M,N] = size(noisy);
@@ -109,8 +93,20 @@ function grad = solve_gradient(u,lambda,original,noisy,params)
         Inact = spdiags(inact,0,2*M*N,2*M*N);
 
         % Get the adjoint state
-        adj = calculate_adjoint(u,Ku,nKu,nabla,lambda,original,Inact,Act,act,M,N);
+        denominador = Inact*nKu+act;
+        prodKuKu = outer_product(Ku./(denominador.^3),Ku,M,N);
+        A = lambda*speye(M*N);
+        B = nabla';
+        C = -Inact*(prodKuKu-spdiags(1./denominador,0,2*M*N,2*M*N))*nabla;
+        D = speye(2*M*N);
+        E = Act*nabla;
+        F = sparse(2*M*N,2*M*N);
+        Adj = [A B;C D;E F];
+        Track = [u(:)-original(:);sparse(4*M*N,1)];
+        mult = Adj\Track;
+        adj = mult(1:N*M);
     else
+        gamma = 0.001;
         act = (nKu<1e-7);
         inact = 1-act;
         Act = spdiags(act,0,2*M*N,2*M*N);
