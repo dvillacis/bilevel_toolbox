@@ -25,13 +25,13 @@ bilevel_param.verbose = 2;
 bilevel_param.maxit = 100;
 bilevel_param.tol = 1e-4;
 bilevel_param.algo = 'NONSMOOTH_TRUST_REGION';
-bilevel_param.radius = 0.01;
-bilevel_param.minradius = 0.00001;
+bilevel_param.radius = 1;
+bilevel_param.minradius = 0.01;
 bilevel_param.gamma1 = 0.5;
 bilevel_param.gamma2 = 1.5;
 bilevel_param.eta1 = 0.01;
-bilevel_param.eta2 = 0.80;
-lambda = 0.1;
+bilevel_param.eta2 = 0.90;
+lambda = 1.8;
 [sol,info] = solve_bilevel(lambda,lower_level_problem,upper_level_problem,bilevel_param);
 
 optimal_sol = solve_lower_level(sol,noisy);
@@ -83,11 +83,14 @@ function grad = solve_gradient(u,lambda,original,noisy,params)
 
     [M,N] = size(noisy);
     nabla = gradient_matrix(M,N);
-    Ku = nabla*u(:);
-    nKu = xi(Ku,M,N);
+    A = lambda*speye(M*N); % Build diagonal matrix with parameters to estimate
+    B = nabla';
+    Ku = nabla*u(:); %Discrete gradient matrix
+    nKu = xi(Ku,M,N); %Discrete euclidean norm
 
     if params.complex_model == false
-        act = (nKu<1e-7);
+        % Get partition active-inactive
+        act = (nKu<1e-7); %TODO: Specify a partition of the possible biactive set
         inact = 1-act;
         Act = spdiags(act,0,2*M*N,2*M*N);
         Inact = spdiags(inact,0,2*M*N,2*M*N);
@@ -95,8 +98,6 @@ function grad = solve_gradient(u,lambda,original,noisy,params)
         % Get the adjoint state
         denominador = Inact*nKu+act;
         prodKuKu = outer_product(Ku./(denominador.^3),Ku,M,N);
-        A = lambda*speye(M*N);
-        B = nabla';
         C = -Inact*(prodKuKu-spdiags(1./denominador,0,2*M*N,2*M*N))*nabla;
         D = speye(2*M*N);
         E = Act*nabla;
@@ -106,14 +107,51 @@ function grad = solve_gradient(u,lambda,original,noisy,params)
         mult = Adj\Track;
         adj = mult(1:N*M);
     else
-        gamma = 0.001;
-        act = (nKu<1e-7);
-        inact = 1-act;
-        Act = spdiags(act,0,2*M*N,2*M*N);
-        Inact = spdiags(inact,0,2*M*N,2*M*N);
+        % Get Active, Strongly Active and Inactive - gamma sets
+        gamma = 1000;
+        act1 = gamma*nKu-1;
+        act=spones(max(0,act1(1:M*N)-1/(2*gamma)));
+        Act=spdiags(act,0,M*N,M*N);
+        inact=spones(min(0,act1(1:M*N)+1/(2*gamma)));
+        sact=sparse(1-act-inact);
+        Sact=spdiags(sact,0,M*N,M*N);
 
-        % Get the adjoint state
-        adj = calculate_adjoint(u,Ku,nKu,nabla,lambda,original,Inact,Act,act,M,N);
+        % Diagonal matrix corresponding to regularization function
+        den=(Act+Sact)*nKu(1:M*N)+inact;
+        mk=(act+Sact*(1-gamma/2*(1-gamma*nKu(1:M*N)+1/(2*gamma)).^2))./den;
+        Dmi=spdiags(kron(ones(2,1),mk+gamma*inact),0,2*M*N,2*M*N);
+
+        % Negative term in the derivative
+        subst=spdiags(act+Sact*(1-gamma/2*(1-gamma*nKu(1:M*N)+1/(2*gamma)).^2),0,M*N,M*N);
+        subst=kron(speye(2),subst);
+
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % Construction of the Hessian components corresponding to each
+        % equation in the optimality system
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+        % Matrix of product (Ku)*(Ku)^T for the Newton step divided by
+        % the Frobenius norm to the cube
+
+        H4=outer_product(Ku./kron(ones(2,1),den.^2),Ku,M,N);
+
+        % Matrix of product (Gy)*(Gy)^T for the Newton step
+
+        prodKuKu=outer_product(Ku,Ku,M,N);
+
+        sk2=(Sact*gamma^2*(1-gamma*nKu(1:M*N)+1/(2*gamma)))./(den.^2);
+        sk2=spdiags(kron(ones(2,1),sk2),0,2*M*N,2*M*N);
+
+        % Hessian matrix components corresponding to the first equation
+        % in the optimality system
+        % TODO: This is the second derivative of the l2 norm (check it out!) -> Check derivation!
+
+        hess22=Dmi*nabla-kron(speye(2),(Act+Sact))*Dmi*H4*nabla+sk2*prodKuKu*nabla;
+
+        % Adjoint state is solution of the linear system
+
+        adj=(A+B*hess22)\(u(:)-original(:));
+
     end
 
     % Calculating the gradient
