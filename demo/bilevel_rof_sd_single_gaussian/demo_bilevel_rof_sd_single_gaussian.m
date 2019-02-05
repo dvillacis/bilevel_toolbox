@@ -23,17 +23,17 @@ upper_level_problem.dataset = dataset;
 
 %% Solving the bilevel problem
 bilevel_param.verbose = 2;
-bilevel_param.maxit = 300;
+bilevel_param.maxit = 20;
 bilevel_param.tol = 1e-2;
 bilevel_param.algo = 'NONSMOOTH_TRUST_REGION';
-bilevel_param.radius = 1;
-bilevel_param.minradius = 0.1;
+bilevel_param.radius = 3000;
+bilevel_param.minradius = 1;
 bilevel_param.gamma1 = 0.5;
 bilevel_param.gamma2 = 1.5;
 bilevel_param.eta1 = 0.10;
 bilevel_param.eta2 = 0.90;
-lambda1 = 0.1*ones(0.5*M*N,1);
-lambda2 = 0.2*ones(0.5*M*N,1);
+lambda1 = 100*ones(0.5*M*N,1);
+lambda2 = 200*ones(0.5*M*N,1);
 lambda = vertcat(lambda1,lambda2); % Initial guess
 %lambda = 0.1*rand(M*N,1);
 [sol,info] = solve_bilevel(lambda,lower_level_problem,upper_level_problem,bilevel_param);

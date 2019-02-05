@@ -9,6 +9,7 @@ function [sol,s,param] = nonsmooth_trust_region_initialize(x_0,lower_level_probl
 
   s.x_n = {};
   sol = x_0;
+  s.sol_history = sol;
   s.radius = param.radius;
   s.hess = 0;
   s.res = 1;
@@ -38,6 +39,11 @@ function [sol,s] = nonsmooth_trust_region_algorithm(lower_level_problem,upper_le
 
     % Getting current cost
     cost = upper_level_problem.eval(u,sol);
+    if ~isfield(s, 'l2_cost_history')
+        s.l2_cost_history = cost;
+    else
+        s.l2_cost_history = [s.l2_cost_history cost];
+    end
 
     if s.radius >= param.minradius
 
@@ -81,14 +87,12 @@ function [sol,s] = nonsmooth_trust_region_algorithm(lower_level_problem,upper_le
         if rho > param.eta2
           sol = sol + step;
           s.radius = param.gamma2*s.radius;
-          s.current_l2_cost = next_cost;
+          s.sol_history = [s.sol_history sol];
         elseif rho <= param.eta1
           s.radius = param.gamma1*s.radius;
-          s.current_l2_cost = cost;
         else
           %sol = sol + step;
           s.radius = param.gamma1*s.radius;
-          s.current_l2_cost = cost;
         end
 
     else
@@ -117,14 +121,12 @@ function [sol,s] = nonsmooth_trust_region_algorithm(lower_level_problem,upper_le
         if rho > param.eta2
           sol = sol + step;
           s.radius = param.gamma2*s.radius;
-          s.current_l2_cost = next_cost;
+          s.sol_history = [s.sol_history sol];
         elseif rho <= param.eta1
           s.radius = param.gamma1*s.radius;
-          s.current_l2_cost = cost;
         else
           %sol = sol + step;
           s.radius = param.gamma1*s.radius;
-          s.current_l2_cost = cost;
         end
     end
 end
