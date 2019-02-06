@@ -5,8 +5,8 @@ function [sol,gap] = solve_generic_l1_l2(lambda,alpha,Ks,Bs,z,q,gamma,xinit,para
 % INPUTS
 %   lambda: l2 fidelity weights
 %   alpha: l1 fidelity weights
-%   Ks: cell array of matrices corresponding to l2 terms
-%   Bs: cell array of matrices corresponding to the l1 terms
+%   Ks: cell array of operators corresponding to l2 terms
+%   Bs: cell array of operators corresponding to the l1 terms
 %   z: l2 data
 %   q: l1 data
 %   gamma: Huber regularization parameter for l1 terms
@@ -44,11 +44,23 @@ function [sol,gap] = solve_generic_l1_l2(lambda,alpha,Ks,Bs,z,q,gamma,xinit,para
   % Test for cell input Ks
   if ~iscell(Ks)
     error('Ks must be a cell array.');
+  else
+      for k = 1:length(Ks)
+          if ~isa(Ks{k},'Operator')
+              error('Ks elements must be a Operator class instance.');
+          end
+      end
   end
 
   % Test for cell input Bs
   if ~iscell(Bs)
     error('Bs must be a cell array.');
+  else
+      for k = 1:length(Bs)
+          if ~isa(Bs{k},'Operator')
+              error('Bs elements must be a Operator class instance.');
+          end
+      end
   end
 
   % Test for cell input alpha
@@ -78,8 +90,10 @@ function [sol,gap] = solve_generic_l1_l2(lambda,alpha,Ks,Bs,z,q,gamma,xinit,para
   sol_=sol;
 
   % Concatenate l2 and l1 matrices
-  Kbb = cat(1,Ks{:},Bs{:});
-  y = zeros(size(Kbb,1),1);
+  Kbb = ConcatenatedOperator(Ks{:},Bs{:});
+  y = Kbb.val(zeros(size(sol_)));
+  %Kbb = cat(1,Ks{:},Bs{:});
+  %y = zeros(size(Kbb,1),1);
 
   gap = [compute_generic_l1_l2_pd_gap(sol,y,Ks,Bs,lambda,alpha,z,q)];
 
@@ -92,7 +106,8 @@ function [sol,gap] = solve_generic_l1_l2(lambda,alpha,Ks,Bs,z,q,gamma,xinit,para
   for k = 1:param.maxiter
 
     % Dual update
-    y = y + sigma*Kbb*sol_;
+    %y = y + sigma*Kbb*sol_;
+    y = y + sigma*Kbb.val(sol_);
     y = calc_prox(y,z,q,Ks,Bs,lambda,alpha,sigma);
 
     % Primal update

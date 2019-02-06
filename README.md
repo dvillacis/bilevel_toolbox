@@ -5,19 +5,23 @@ This is a MATLAB Toolbox designed to test different bilevel optimization problem
 To use the toolbox, please execute the script `init_bilevel_toolbox.m` to place all the required scripts into the MATLAB path.
 
 ## Lower Level Problem
-In order to define the lower level problem, we need to create a struct that contains the following methods: SOLVE and EVAL
+In order to define the lower level problem, we need to create a struct that contains a SOLVE method
 ```matlab
 % Define lower level problem
 lower_level_problem.solve = @(u) solve_lower_level(u);
 ```
 
 ## Upper Level Problem
-This struct contains the ADJOINT method as well as a EVAL that uses the output from the lower level problem.
+This struct must contain the following methods:
+* GRADIENT: It returns the gradient for a given parameter.
+* EVAL: It calculates the cost function for the upper level problem, this function takes a mandatory solution for the lower level problem.
+* DATASET: It is an instance of the Dataset class which specifies the training set to be used in the parameter learning problem.
 
 ```matlab
 % Define upper level problem
 upper_level_problem.eval = @(y,u,zd,alpha) 0.5*norm(y-zd).^2 + 0.5*alpha*norm(u).^2;
-upper_level_problem.grad = @(y,u,zd,alpha) solve_grad_upper_level(y,u,zd,alpha);
+upper_level_problem.gradient = @(y,u,zd,alpha) solve_grad_upper_level(y,u,zd,alpha);
+upper_level_problem.dataset = dataset;
 ```
 
 ## Bilevel Solver
@@ -32,8 +36,8 @@ bilevel_param.radius = 0.5;
 bilevel_param.minradius = 0.01;
 bilevel_param.gamma1 = 0.5;
 bilevel_param.gamma2 = 1.5;
-bilevel_param.eta1 = 0.01;
-bilevel_param.eta2 = 0.99;
+bilevel_param.eta1 = 0.10;
+bilevel_param.eta2 = 0.90;
 
 % Solve the bilevel problem
 [sol,info] = solve_bilevel(u,lower_level_problem,upper_level_problem,bilevel_param);

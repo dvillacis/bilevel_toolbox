@@ -20,6 +20,7 @@ classdef FinDiffOperator < MatrixOperator
             obj.UseOpt = true;
             obj.UseMex = true;
             obj.CVXVersion = true;
+            obj.Weight = 1;
         end
 
         function fn = selmex(usemex,cvxversion,fast,normal)
@@ -38,16 +39,16 @@ classdef FinDiffOperator < MatrixOperator
         function op_val = val(obj,x)
             %EVAL Evaluation of the operator
             %   Detailed explanation goes here
-            if useopt && method(1)=='f' && method(2)=='n'
-                op_val = obj.selmex(usemex, cvxversion, weight*fastdiff(x, 'gfn'), weight*fwddiff(x));
-            elseif useopt && method(1)=='b' && method(2)=='n'
-                op_val = weight*bwddiff(x);
-            elseif useopt && method(1)=='c' && method(2)=='n'
-                op_val = weight*ctrdiff(x);
+            if obj.UseOpt && obj.Method(1)=='f' && obj.Method(2)=='n'
+                op_val = obj.selmex(obj.UseMex, obj.CVXVersion, obj.Weight*fastdiff(x, 'gfn'), obj.Weight*fwddiff(x));
+            elseif obj.UseOpt && obj.Method(1)=='b' && obj.Method(2)=='n'
+                op_val = obj.Weight*bwddiff(x);
+            elseif obj.UseOpt && obj.Method(1)=='c' && obj.Method(2)=='n'
+                op_val = obj.Weight*ctrdiff(x);
             else
                 dualdim=[dim, 2];
-                grad=weight*diff2d(dim, method);
-                op_val=weight*reshape(grad*x(:), dualdim);
+                grad=obj.Weight*diff2d(dim, method);
+                op_val=obj.Weight*reshape(grad*x(:), dualdim);
             end
 
         end
@@ -56,14 +57,14 @@ classdef FinDiffOperator < MatrixOperator
             %EVAL_CONJ Evaluation of the conjugate of the operator
             %   Detailed explanation goes here
             if useopt && method(1)=='f' && method(2)=='n'
-                op_conj=obj.selmex(usemex, cvxversion, weight*fastdiff(y, '*fn'), weight*fwddiff_conj(y));
+                op_conj=obj.selmex(obj.UseMex, obj.CVXVersion, obj.Weight*fastdiff(y, '*fn'), obj.Weight*fwddiff_conj(y));
             elseif useopt && method(1)=='b' && method(2)=='n'
-                op_conj = weight*bwddiff_conj(y);
+                op_conj = obj.Weight*bwddiff_conj(y);
             elseif useopt && method(1)=='c' && method(2)=='n'
-                op_conj = weight*ctrdiff_conj(y);
+                op_conj = obj.Weight*ctrdiff_conj(y);
             else
-                grad = weight*diff2d(dim, method);
-                op_conj = weight*reshape(grad'*y(:), dim);
+                grad = obj.Weight*diff2d(dim, method);
+                op_conj = obj.Weight*reshape(grad'*y(:), dim);
             end
         end
 

@@ -23,6 +23,7 @@ param_solver.maxiter = 3000;
 
 %% Define the cell matrices
 [M,N] = size(original);
+id_op = IdentityOperator([M,N]);
 K = speye(M*N);
 z = noisy(:);
 lambda = 1;
@@ -34,7 +35,7 @@ alpha = 0.2;
 gamma = 0; % NO Huber regularization
 
 %% Call the solver
-[sol,gap] = solve_generic_l1_l2(lambda,{alpha},{K},{B},z,q,gamma,0*noisy(:),param_solver);
+[sol,gap] = solve_generic_l1_l2({lambda},{alpha},{id_op},{gradient},z,q,gamma,0*noisy(:),param_solver);
 
 %% Plotting the solution
 figure(1)

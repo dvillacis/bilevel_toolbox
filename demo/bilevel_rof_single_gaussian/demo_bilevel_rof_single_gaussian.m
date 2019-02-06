@@ -8,59 +8,61 @@ init_bilevel_toolbox();
 dataset = DatasetInFolder('data/circle_dataset_single_gaussian','*_circle_original.png','*_circle_noisy.png');
 %dataset = DatasetInFolder('data/smiley','*_smiley_original.png','*_smiley_noisy.png');
 
-%% Load input image
-original = dataset.get_target(1);
-noisy = dataset.get_corrupt(1);
-
 % Define lower level problem
-lower_level_problem.solve = @(lambda) solve_lower_level(lambda,noisy);
+lower_level_problem.solve = @(lambda,dataset) solve_lower_level(lambda,dataset.get_corrupt(1));
 
 % Define upper level problem
-upper_level_problem.eval = @(u,lambda) 0.5*norm(u(:)-original(:)).^2 + 0.0001*norm(lambda);
-upper_level_problem.gradient = @(u,lambda,params) solve_gradient(u,lambda,original,noisy,params);
+upper_level_problem.eval = @(u,lambda,dataset) eval_upper_level(u,lambda,dataset);
+upper_level_problem.gradient = @(u,lambda,dataset,params) solve_gradient(u,lambda,dataset,params);
 upper_level_problem.dataset = dataset;
 
 %% Solving the bilevel problem
 bilevel_param.verbose = 2;
 bilevel_param.maxit = 100;
-bilevel_param.tol = 1e-4;
+bilevel_param.tol = 1e-2;
 bilevel_param.algo = 'NONSMOOTH_TRUST_REGION';
 bilevel_param.radius = 1;
 bilevel_param.minradius = 0.01;
 bilevel_param.gamma1 = 0.5;
 bilevel_param.gamma2 = 1.5;
-bilevel_param.eta1 = 0.01;
+bilevel_param.eta1 = 0.10;
 bilevel_param.eta2 = 0.90;
 lambda = 1.8;
 [sol,info] = solve_bilevel(lambda,lower_level_problem,upper_level_problem,bilevel_param);
 
-optimal_sol = solve_lower_level(sol,noisy);
+optimal_sol = solve_lower_level(sol,dataset.get_corrupt(1));
 %% Plotting the solution
-[M,N]=size(original);
+[M,N]=size(dataset.get_target(1));
 optimal_sol = reshape(optimal_sol,M,N);
 figure(1)
 subplot(1,3,1)
-imagesc_gray(original,1,'Original Image');
+imagesc_gray(dataset.get_target(1),1,'Original Image');
 subplot(1,3,2)
-imagesc_gray(noisy,1,'Noisy Image');
+imagesc_gray(dataset.get_corrupt(1),1,'Noisy Image');
 subplot(1,3,3)
 imagesc_gray(optimal_sol,1,'Denoised Image');
 
 %% Auxiliary functions
+function cost = eval_upper_level(u,lambda,dataset)
+    original = dataset.get_target(1);
+    cost = 0.5*norm(u(:)-original(:)).^2 + 0.0001*norm(lambda);
+end
 
-function y = solve_lower_level(lambda,noisy)
+function u = solve_lower_level(lambda,noisy)
     param_solver.verbose = 0;
     param_solver.maxiter = 2000;
     %% Define the cell matrices
     [M,N] = size(noisy);
-    K = speye(M*N);
+    id_op = IdentityOperator([M,N]);
+    K = id_op.matrix();
+    %K = speye(M*N);
     z = noisy(:);
-    gradient = FinDiffOperator([M,N],'fn');
-    B = gradient.matrix();
+    gradient_op = FinDiffOperator([M,N],'fn');
+    B = gradient_op.matrix();
     q = zeros(2*M*N,1);
     alpha = 1;
     gamma = 0;
-    [y,~] = solve_generic_l1_l2({lambda},{alpha},{K},{B},z,q,gamma,0*noisy(:),param_solver);
+    [u,~] = solve_generic_l1_l2({lambda},{alpha},{K},{B},z,q,gamma,0*noisy(:),param_solver);
 end
 
 function nXi = xi(p,m,n)
@@ -79,7 +81,10 @@ function prod = outer_product(p,q,m,n)
     prod = [spdiags(a,0,m*n,m*n) spdiags(b,0,m*n,m*n); spdiags(c,0,m*n,m*n) spdiags(d,0,m*n,m*n)];
 end
 
-function grad = solve_gradient(u,lambda,original,noisy,params)
+function grad = solve_gradient(u,lambda,dataset,params)
+
+    original = dataset.get_target(1);
+    noisy = dataset.get_corrupt(1);
 
     [M,N] = size(noisy);
     nabla = gradient_matrix(M,N);

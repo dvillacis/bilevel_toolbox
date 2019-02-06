@@ -7,6 +7,6 @@ classdef MatrixOperator < Operator
     end
 
     methods (Abstract)
-        matrix();
+        matrix(obj);
     end
 end

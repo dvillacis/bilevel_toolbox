@@ -19,26 +19,17 @@ function [sol,s,param] = nonsmooth_trust_region_initialize(x_0,lower_level_probl
     param.minradius = 1e-4;
   end
 
-  % Test if lower level problem has a solve method
-  if ~isfield(lower_level_problem, 'solve')
-    error('Lower Level Problem struct does not provide a SOLVE method.')
-  end
-
-  % Test if upper level problem has an gradient method
-  if ~isfield(upper_level_problem, 'gradient')
-    error('Upper Level Problem struct does not provide an GRADIENT method.')
-  end
-
 end
 
 function [sol,s] = nonsmooth_trust_region_algorithm(lower_level_problem,upper_level_problem,sol,s,param)
 
     % Solving the state equation (lower level solver)
-    u = lower_level_problem.solve(sol);
-    u = u(:);
+    u = lower_level_problem.solve(sol,upper_level_problem.dataset);
 
     % Getting current cost
-    cost = upper_level_problem.eval(u,sol);
+    cost = upper_level_problem.eval(u,sol,upper_level_problem.dataset);
+
+    % Saving cost history
     if ~isfield(s, 'l2_cost_history')
         s.l2_cost_history = cost;
     else
@@ -49,7 +40,7 @@ function [sol,s] = nonsmooth_trust_region_algorithm(lower_level_problem,upper_le
 
         % Solving the gradient
         gradient_parameters.complex_model = false;
-        s.grad = upper_level_problem.gradient(u,sol,gradient_parameters);
+        s.grad = upper_level_problem.gradient(u,sol,upper_level_problem.dataset,gradient_parameters);
 
         % Hessian Matrix approximation
         if isfield(s,'solprev') && norm(s.hess)~= 0
@@ -72,8 +63,8 @@ function [sol,s] = nonsmooth_trust_region_algorithm(lower_level_problem,upper_le
 
         % Trust Region Modification
         pred = -s.grad'*step-0.5*step'*s.hess*step;
-        next_u = lower_level_problem.solve(sol+step);
-        next_cost = upper_level_problem.eval(next_u,sol+step);
+        next_u = lower_level_problem.solve(sol+step,upper_level_problem.dataset);
+        next_cost = upper_level_problem.eval(next_u,sol+step,upper_level_problem.dataset);
         ared = cost-next_cost;
         rho = ared/pred;
 
@@ -99,15 +90,15 @@ function [sol,s] = nonsmooth_trust_region_algorithm(lower_level_problem,upper_le
 
         % Solving the gradient
         gradient_parameters.complex_model = true;
-        s.grad = upper_level_problem.gradient(u,sol,gradient_parameters);
+        s.grad = upper_level_problem.gradient(u,sol,upper_level_problem.dataset,gradient_parameters);
 
         step = tr_subproblem(s.grad,s.hess,s.radius);
         %psi = tr_complex_stationarity_measure(s.grad,s.hess);
 
         % Trust Region Modification
         pred = -s.grad'*step-0.5*step'*s.hess*step;
-        next_u = lower_level_problem.solve(sol+step);
-        next_cost = upper_level_problem.eval(next_u,sol+step);
+        next_u = lower_level_problem.solve(sol+step,upper_level_problem.dataset);
+        next_cost = upper_level_problem.eval(next_u,sol+step,upper_level_problem.dataset);
         ared = cost-next_cost;
         rho = ared/pred;
 

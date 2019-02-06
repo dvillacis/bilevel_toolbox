@@ -5,16 +5,16 @@ function [gap] = compute_generic_l1_l2_pd_gap(x,y,Ks,Bs,lambda,alpha,z,q)
 global FUBAR; %% TODO: Remove and rename FUBAR
 
 gamma = 0.01;
-Kbb = cat(1,Ks{:},Bs{:});
+Kbb = cat(1,Ks{:}.matrix(),Bs{:}.matrix());
 
 % Calculate primal value
 primal_1 = 0;
 for k=1:length(Ks)
-  primal_1 = primal_1 + sum(lambda{k} .* ((Ks{k}*x-z).^2));
+  primal_1 = primal_1 + sum(lambda{k} .* ((Ks{k}.matrix()*x-z).^2));
 end
 primal_2 = 0;
 for l = 1:length(Bs)
-  primal_2 = primal_2 + sum(alpha{l} .* l2_norm(Bs{l}*x-q));
+  primal_2 = primal_2 + sum(alpha{l} .* l2_norm(Bs{l}.matrix()*x-q));
 end
 primal_reg = 0;
 %primal_reg = 0.5*gamma*norm(x).^2;
@@ -24,13 +24,13 @@ primal = primal_1 + primal_2 + primal_reg;
 index = 0;
 dual_1 = 0;
 for k=1:length(Ks)
-  n = size(Ks{k},1);
+  n = size(Ks{k}.matrix(),1);
   dual_1 = dual_1 + sum(0.25*(1./lambda{k}).*(y(index+1:index+n).^2)) + y(index+1:index+n)'*z;
   index = index+n;
 end
 dual_2 = 0;
 for l = 1:length(Bs)
-  n = size(Bs{l},1);
+  n = size(Bs{l}.matrix(),1);
   dual_2 = dual_2 + y(index+1:index+n)' * q;
   index = index+n;
 end
