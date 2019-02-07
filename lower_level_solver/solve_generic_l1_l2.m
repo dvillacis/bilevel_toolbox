@@ -74,8 +74,8 @@ function [sol,gap] = solve_generic_l1_l2(lambda,alpha,Ks,Bs,z,q,gamma,xinit,para
   end
 
   % Test for input vector
-  if ~isvector(xinit)
-    error('xinit must ve a vector, not a matrix.');
+  if isvector(xinit)
+    error('xinit must ve a matrix, not a vector.');
   end
 
 %   L = sqrt(8+1);
@@ -95,7 +95,7 @@ function [sol,gap] = solve_generic_l1_l2(lambda,alpha,Ks,Bs,z,q,gamma,xinit,para
   %Kbb = cat(1,Ks{:},Bs{:});
   %y = zeros(size(Kbb,1),1);
 
-  gap = [compute_generic_l1_l2_pd_gap(sol,y,Ks,Bs,lambda,alpha,z,q)];
+  gap = compute_generic_l1_l2_pd_gap(sol,y,Ks,Bs,lambda,alpha,z,q);
 
   if param.verbose > 1
     fprintf('generic_l1_l2: iter = %4d, gap = %f\n', 0, gap(1));
@@ -117,7 +117,7 @@ function [sol,gap] = solve_generic_l1_l2(lambda,alpha,Ks,Bs,z,q,gamma,xinit,para
     % Interpolation step
     sol_ = 2*sol - sol_;
 
-    ga = compute_generic_l1_l2_pd_gap(sol,y,Ks,Bs,lambda,alpha,z,q);
+    ga = compute_generic_l1_l2_pd_gap(sol,y,Kbb,lambda,alpha,z,q);
     gap = [gap, ga];
 
     if mod(k, param.check) == 0 && param.verbose > 1

@@ -5,42 +5,43 @@ function [gap] = compute_generic_l1_l2_pd_gap(x,y,Ks,Bs,lambda,alpha,z,q)
 global FUBAR; %% TODO: Remove and rename FUBAR
 
 gamma = 0.01;
-Kbb = cat(1,Ks{:}.matrix(),Bs{:}.matrix());
 
 % Calculate primal value
 primal_1 = 0;
 for k=1:length(Ks)
-  primal_1 = primal_1 + sum(lambda{k} .* ((Ks{k}.matrix()*x-z).^2));
+    t = Ks{k}.val(x)-z;
+    primal_1 = primal_1 + sum(lambda{k} .* (norm(t(:)).^2));
 end
 primal_2 = 0;
 for l = 1:length(Bs)
-  primal_2 = primal_2 + sum(alpha{l} .* l2_norm(Bs{l}.matrix()*x-q));
+    t = Bs{l}.val(x)-q;
+    primal_2 = primal_2 + sum(alpha{l} .* norm2(t));
 end
 primal_reg = 0;
 %primal_reg = 0.5*gamma*norm(x).^2;
 primal = primal_1 + primal_2 + primal_reg;
 
 % Calculate dual value
-index = 0;
 dual_1 = 0;
 for k=1:length(Ks)
-  n = size(Ks{k}.matrix(),1);
-  dual_1 = dual_1 + sum(0.25*(1./lambda{k}).*(y(index+1:index+n).^2)) + y(index+1:index+n)'*z;
-  index = index+n;
+  yk = y.elements{k};
+  dual_1 = dual_1 + sum(0.25*(1./lambda{k}).*(yk(:).^2)) + yk(:)'*z(:);
 end
 dual_2 = 0;
 for l = 1:length(Bs)
-  n = size(Bs{l}.matrix(),1);
-  dual_2 = dual_2 + y(index+1:index+n)' * q;
-  index = index+n;
+  yk = y.elements{k+length(Ks)};
+  dual_2 = dual_2 + yk(:)' * q(:);
 end
 %dual_reg = 0.5*(1/gamma)*norm(Kbb'*y).^2;
 M=norm(x);
 if isempty(FUBAR) || FUBAR<M
     FUBAR=M;
 end
-dual_reg = M*norm(Kbb'*y);
-dual = dual_1 + dual_2 + dual_reg;
+%x1 = Ks{1}.conj(y{1});
+%x2 = Bs{1}.conj(y{2});
+%dual_reg = M*norm([x1(:);x2(:)]);
+%dual_reg = M*norm(Kbb'*y);
+dual = dual_1 + dual_2;% + dual_reg;
 
 % Calculate the gap
 gap = primal+dual;

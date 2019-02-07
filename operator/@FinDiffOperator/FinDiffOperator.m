@@ -23,48 +23,37 @@ classdef FinDiffOperator < MatrixOperator
             obj.Weight = 1;
         end
 
-        function fn = selmex(usemex,cvxversion,fast,normal)
-            %SELMEX Solver selection
-            %   Detailed explanation goes here
-            if ~usemex
-                fn = normal;
-            elseif ~cvxversion
-                fn = fast;
-            else
-                fn=@(x) dynsel(fast,normal,x);
-            end
-
-        end
-
-        function op_val = val(obj,x)
+        function res = val(obj,x)
             %EVAL Evaluation of the operator
             %   Detailed explanation goes here
             if obj.UseOpt && obj.Method(1)=='f' && obj.Method(2)=='n'
-                op_val = obj.selmex(obj.UseMex, obj.CVXVersion, obj.Weight*fastdiff(x, 'gfn'), obj.Weight*fwddiff(x));
+                op_val = obj.selmex(obj.UseMex, obj.CVXVersion, @(x)fastdiff(x, 'gfn'), @(x) obj.fwddiff(x));
+                res = op_val(x);
             elseif obj.UseOpt && obj.Method(1)=='b' && obj.Method(2)=='n'
-                op_val = obj.Weight*bwddiff(x);
+                res = obj.Weight*bwddiff(x);
             elseif obj.UseOpt && obj.Method(1)=='c' && obj.Method(2)=='n'
-                op_val = obj.Weight*ctrdiff(x);
+                res = obj.Weight*ctrdiff(x);
             else
                 dualdim=[dim, 2];
                 grad=obj.Weight*diff2d(dim, method);
-                op_val=obj.Weight*reshape(grad*x(:), dualdim);
+                res = obj.Weight*reshape(grad*x(:), dualdim);
             end
 
         end
 
-        function op_conj = conj(obj,y)
+        function res = conj(obj,y)
             %EVAL_CONJ Evaluation of the conjugate of the operator
             %   Detailed explanation goes here
-            if useopt && method(1)=='f' && method(2)=='n'
-                op_conj=obj.selmex(obj.UseMex, obj.CVXVersion, obj.Weight*fastdiff(y, '*fn'), obj.Weight*fwddiff_conj(y));
-            elseif useopt && method(1)=='b' && method(2)=='n'
-                op_conj = obj.Weight*bwddiff_conj(y);
-            elseif useopt && method(1)=='c' && method(2)=='n'
-                op_conj = obj.Weight*ctrdiff_conj(y);
+            if obj.UseOpt && obj.Method(1)=='f' && obj.Method(2)=='n'
+                op_conj=obj.selmex(obj.UseMex, obj.CVXVersion, obj.Weight*fastdiff(y, '*fn'), obj.Weight*obj.fwddiff_conj(y));
+                res = op_conj(y);
+            elseif obj.UseOpt && obj.Method(1)=='b' && obj.Method(2)=='n'
+                res = obj.Weight*bwddiff_conj(y);
+            elseif obj.UseOpt && obj.Method(1)=='c' && obj.Method(2)=='n'
+                res = obj.Weight*ctrdiff_conj(y);
             else
-                grad = obj.Weight*diff2d(dim, method);
-                op_conj = obj.Weight*reshape(grad'*y(:), dim);
+                grad = obj.Weight*diff2d(dim, obj.Method);
+                res = obj.Weight*reshape(grad'*y(:), dim);
             end
         end
 
@@ -76,6 +65,22 @@ classdef FinDiffOperator < MatrixOperator
 
         function bnd = bound(obj)
             bnd = norm(obj.matrix());
+        end
+    end
+
+    methods(Static)
+
+        function fn = selmex(usemex,cvxversion,fast,normal)
+            %SELMEX Solver selection
+            %   Detailed explanation goes here
+            if ~usemex
+                fn = normal;
+            elseif ~cvxversion
+                fn = fast;
+            else
+                fn=@(x) dynsel(fast,normal,x);
+            end
+
         end
 
         function res = fwddiff(x)
