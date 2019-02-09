@@ -1,6 +1,6 @@
 classdef Tuple
 
-    properties(GetAccess = public, SetAccess = protected)
+    properties(GetAccess = public, SetAccess = public)
         elements
         NumElements
     end
@@ -15,6 +15,17 @@ classdef Tuple
                 for k = 1:nargin %TODO: Check the element is a matrix or tensor
                     obj.elements{k} = varargin{k};
                     obj.NumElements = obj.NumElements + 1;
+                end
+            end
+        end
+        
+        function s = sum_all_elements(obj)
+            s = obj.elements{1};
+            for k = 1:obj.NumElements-1
+                if(size(obj.elements{k})~=size(obj.elements{k+1}))
+                    error('All tuple elements must have the same size in order to add them together');
+                else
+                    s = s + obj.elements{k+1};
                 end
             end
         end
@@ -39,7 +50,11 @@ classdef Tuple
         end
 
         function o2 = uminus(o1)
-            o2=Tuple(-o1.u, -o1.v);
+            minuscell = cell(o1.NumElements,1);
+            for k=1:a1.NumElements
+                minuscell{k} = -o1.elements{k};
+            end
+            o2=Tuple(minuscell{:});
         end
 
         function o = mtimes(a1, a2)

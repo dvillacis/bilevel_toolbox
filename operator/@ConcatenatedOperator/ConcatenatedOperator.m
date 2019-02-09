@@ -40,11 +40,13 @@ classdef ConcatenatedOperator
         function op_conj = conj(obj,y)
             %METHOD1 Summary of this method goes here
             %   Detailed explanation goes here
+            assert(isa(y,'Tuple'));
             conj = cell(obj.NumOperators,1);
             for k = 1:obj.NumOperators
-                conj{k} = obj.operators{k}.conj(y);
+                conj{k} = obj.operators{k}.conj(y.elements{k});
             end
-            op_conj = Tuple(conj{:});
+            conj_tuple = Tuple(conj{:});
+            op_conj = conj_tuple.sum_all_elements();
         end
 
         function ops = get_number_of_operators(obj)

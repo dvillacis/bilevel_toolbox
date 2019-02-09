@@ -34,8 +34,8 @@ classdef FinDiffOperator < MatrixOperator
             elseif obj.UseOpt && obj.Method(1)=='c' && obj.Method(2)=='n'
                 res = obj.Weight*ctrdiff(x);
             else
-                dualdim=[dim, 2];
-                grad=obj.Weight*diff2d(dim, method);
+                dualdim=[obj.Dim, 2];
+                grad=obj.Weight*diff2d(obj.Dim, obj.Method);
                 res = obj.Weight*reshape(grad*x(:), dualdim);
             end
 
@@ -45,15 +45,15 @@ classdef FinDiffOperator < MatrixOperator
             %EVAL_CONJ Evaluation of the conjugate of the operator
             %   Detailed explanation goes here
             if obj.UseOpt && obj.Method(1)=='f' && obj.Method(2)=='n'
-                op_conj=obj.selmex(obj.UseMex, obj.CVXVersion, obj.Weight*fastdiff(y, '*fn'), obj.Weight*obj.fwddiff_conj(y));
+                op_conj=obj.selmex(obj.UseMex, obj.CVXVersion, @(y) fastdiff(y, '*fn'), @(y) obj.fwddiff_conj(y));
                 res = op_conj(y);
             elseif obj.UseOpt && obj.Method(1)=='b' && obj.Method(2)=='n'
                 res = obj.Weight*bwddiff_conj(y);
             elseif obj.UseOpt && obj.Method(1)=='c' && obj.Method(2)=='n'
                 res = obj.Weight*ctrdiff_conj(y);
             else
-                grad = obj.Weight*diff2d(dim, obj.Method);
-                res = obj.Weight*reshape(grad'*y(:), dim);
+                grad = obj.Weight*diff2d(obj.Dim, obj.Method);
+                res = obj.Weight*reshape(grad'*y(:), obj.Dim);
             end
         end
 

@@ -24,17 +24,17 @@ param_solver.tol = 1e-3;
 
 %% Define the cell matrices
 [M,N] = size(original);
-K = speye(M*N);
-z = noisy(:);
-lambda = 10*reshape(triu(ones(M,N)),M*N,1)+500*reshape(tril(ones(M,N)),M*N,1);
-B = gradient_matrix(M,N);
-q = zeros(2*M*N,1);
-alpha = 1.0*reshape(ones(M,N),M*N,1);
+id_op = IdentityOperator([M,N]);
+z = noisy;
+lambda = 0.1*triu(ones(M,N))+500*tril(ones(M,N));
+gradient = FinDiffOperator([M,N],'fn');
+q = zeros(M,N,2);
+alpha = ones(M,N);
 
 gamma = 0; % NO Huber regularization
 
 %% Call the solver
-[sol,gap] = solve_generic_l1_l2({lambda},{alpha},{K},{B},z,q,gamma,0*noisy(:),param_solver);
+[sol,gap] = solve_generic_l1_l2({lambda},{alpha},{id_op},{gradient},z,q,gamma,noisy,param_solver);
 
 %% Plotting the solution
 figure(1)

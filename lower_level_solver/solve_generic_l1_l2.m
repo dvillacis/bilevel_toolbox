@@ -112,12 +112,12 @@ function [sol,gap] = solve_generic_l1_l2(lambda,alpha,Ks,Bs,z,q,gamma,xinit,para
 
     % Primal update
     sol_ = sol;
-    sol = sol - tau * Kbb' * y;
+    sol = sol - tau * Kbb.conj(y);
 
     % Interpolation step
     sol_ = 2*sol - sol_;
 
-    ga = compute_generic_l1_l2_pd_gap(sol,y,Kbb,lambda,alpha,z,q);
+    ga = compute_generic_l1_l2_pd_gap(sol,y,Ks,Bs,lambda,alpha,z,q);
     gap = [gap, ga];
 
     if mod(k, param.check) == 0 && param.verbose > 1
@@ -151,16 +151,16 @@ function [sol,gap] = solve_generic_l1_l2(lambda,alpha,Ks,Bs,z,q,gamma,xinit,para
 end
 
 function prox = calc_prox(y,z,q,Ks,Bs,lambda,alpha,tau)
-    index = 0;
     for k=1:length(Ks)
-        n = size(Ks{k},1);
-        y(index+1:index+n) = (y(index+1:index+n)-tau.*z)./(1+0.5*tau*(1./lambda{k})); % l2 proximal
-        index = index + n;
+        %n = size(Ks{k},1);
+        y.elements{k} = (y.elements{k}-tau.*z)./(1+0.5*tau*(1./lambda{k}));% l2 proximal
+        %y(index+1:index+n) = (y(index+1:index+n)-tau.*z)./(1+0.5*tau*(1./lambda{k})); % l2 proximal
     end
     for l = 1:length(Bs)
-        n = size(Bs{l},1);
-        y(index+1:index+n) = projection_l2_ball(y(index+1:index+n)-tau*q,alpha{l});
-        index = index + n;
+        %n = size(Bs{l},1);
+        y.elements{l+length(Ks)} = projection_l2_ball(y.elements{l+length(Ks)}-tau*q,alpha{l});
+        %y(index+1:index+n) = projection_l2_ball(y(index+1:index+n)-tau*q,alpha{l});
+        %index = index + n;
     end
     prox = y;
 end

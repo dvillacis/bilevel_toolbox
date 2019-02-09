@@ -10,12 +10,12 @@ clc;
 init_bilevel_toolbox();
 
 % Load dataset
-%dataset = DatasetInFolder('data/circle_dataset_single_gaussian','*_circle_original.png','*_circle_noisy.png');
-dataset = DatasetInFolder('data/playing_cards','*_playing_cards_original.tif','*_playing_cards_noisy.tif');
+dataset = DatasetInFolder('data/circle_dataset_single_gaussian','*_circle_original.png','*_circle_noisy.png');
+%dataset = DatasetInFolder('data/playing_cards','*_playing_cards_original.tif','*_playing_cards_noisy.tif');
 
 %% Load input image
-original = dataset.get_target(6);
-noisy = dataset.get_corrupt(6);
+original = dataset.get_target(1);
+noisy = dataset.get_corrupt(1);
 
 %% Solving the Lower Level Problem
 param_solver.verbose = 2;
@@ -24,17 +24,18 @@ param_solver.tol = 1e-2;
 
 %% Define the cell matrices
 [M,N] = size(original);
-K = speye(M*N);
-z = noisy(:);
-lambda = 1;
-B = gradient_matrix(M,N);
-q = zeros(2*M*N,1);
-alpha = 0.2*reshape(triu(ones(M,N)),M*N,1);
+id_op = IdentityOperator([M,N]);
+z = noisy;
+lambda = ones(M,N);
+gradient = FinDiffOperator([M,N],'fn');
+%B = gradient_matrix(M,N);
+q = zeros(M,N,2);
+alpha = 0.1*triu(ones(M,N))+500*tril(ones(M,N));
 
 gamma = 0; % NO Huber regularization
 
 %% Call the solver
-[sol,gap] = solve_generic_l1_l2(lambda,{alpha},{K},{B},z,q,gamma,0*noisy(:),param_solver);
+[sol,gap] = solve_generic_l1_l2({lambda},{alpha},{id_op},{gradient},z,q,gamma,0*noisy,param_solver);
 
 %% Plotting the solution
 figure(1)
