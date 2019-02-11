@@ -20,6 +20,7 @@ noisy = dataset.get_corrupt(1);
 %% Solving the Lower Level Problem
 param_solver.verbose = 2;
 param_solver.maxiter = 3000;
+%param_solver.check = 1;
 
 %% Define the cell matrices
 [M,N] = size(original);
@@ -28,12 +29,12 @@ z = noisy;
 lambda = 1;
 gradient = FinDiffOperator([M,N],'fn');
 q = zeros(M,N,2);
-alpha = 0.2;
+alpha = 0.1;
 
 gamma = 0; % NO Huber regularization
 
 %% Call the solver
-[sol,gap] = solve_generic_l1_l2({lambda},{alpha},{id_op},{gradient},z,q,gamma,noisy,param_solver);
+[sol,gap] = solve_generic_l1_l2({lambda},{alpha},{id_op},{gradient},z,q,gamma,0*noisy,param_solver);
 
 %% Plotting the solution
 figure(1)

@@ -22,11 +22,12 @@ noisy = dataset.get_corrupt(1);
 param_solver.verbose = 2;
 param_solver.maxiter = 2000;
 
+
 %% Define the cell matrices
 [M,N] = size(original);
 id_op = IdentityOperator([M,N]);
 z = noisy;
-lambda = 9.5;
+lambda = 4.5;
 gradient = FinDiffOperator([M,N],'fn');
 q = zeros(M,N,2);
 alpha = 1;

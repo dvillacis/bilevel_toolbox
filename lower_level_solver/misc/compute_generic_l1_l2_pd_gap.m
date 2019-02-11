@@ -25,9 +25,10 @@ primal = primal_1 + primal_2 + primal_reg;
 % Calculate dual value
 dual_1 = 0;
 for k=1:length(Ks)
-  yk = y.elements{k};
-  item = 0.25*((yk.^2)./lambda{k});
-  dual_1 = dual_1 + sum(item(:)) + yk(:)'*z(:);
+    yk = y.elements{k};
+    item = 0.25*((yk.^2)./lambda{k});
+    dual_1 = dual_1 + sum(item(:)) + yk(:)'*z(:);
+    %dual_1 = dual_1 + 0.25*(1./lambda{k})*norm(yk(:)).^2 + yk(:)'*z(:);
 end
 dual_2 = 0;
 for l = 1:length(Bs)
@@ -36,7 +37,7 @@ for l = 1:length(Bs)
 end
 Kbb = ConcatenatedOperator(Ks{:},Bs{:});
 %dual_reg = 0.5*(1/gamma)*norm2(Kbb.conj(y)).^2;
-M=norm(x);
+M=norm(x(:));
 if isempty(FUBAR) || FUBAR<M
     FUBAR=M;
 end
@@ -45,4 +46,5 @@ dual = dual_1 + dual_2 + dual_reg;
 
 % Calculate the gap
 gap = primal+dual;
+
 end

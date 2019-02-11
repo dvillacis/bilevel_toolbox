@@ -91,7 +91,7 @@ function [sol,gap] = solve_generic_l1_l2(lambda,alpha,Ks,Bs,z,q,gamma,xinit,para
 
   % Concatenate l2 and l1 matrices
   Kbb = ConcatenatedOperator(Ks{:},Bs{:});
-  y = Kbb.val(zeros(size(sol_)));
+  y = Kbb.val(sol);
   %Kbb = cat(1,Ks{:},Bs{:});
   %y = zeros(size(Kbb,1),1);
 
@@ -152,15 +152,10 @@ end
 
 function prox = calc_prox(y,z,q,Ks,Bs,lambda,alpha,tau)
     for k=1:length(Ks)
-        %n = size(Ks{k},1);
         y.elements{k} = (y.elements{k}-tau.*z)./(1+0.5*tau*(1./lambda{k}));% l2 proximal
-        %y(index+1:index+n) = (y(index+1:index+n)-tau.*z)./(1+0.5*tau*(1./lambda{k})); % l2 proximal
     end
     for l = 1:length(Bs)
-        %n = size(Bs{l},1);
         y.elements{l+length(Ks)} = projection_l2_ball(y.elements{l+length(Ks)}-tau*q,alpha{l});
-        %y(index+1:index+n) = projection_l2_ball(y(index+1:index+n)-tau*q,alpha{l});
-        %index = index + n;
     end
     prox = y;
 end

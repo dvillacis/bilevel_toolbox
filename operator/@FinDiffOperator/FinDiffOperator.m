@@ -9,6 +9,7 @@ classdef FinDiffOperator < MatrixOperator
         UseOpt
         UseMex
         CVXVersion
+        Grad
     end
 
     methods
@@ -21,6 +22,7 @@ classdef FinDiffOperator < MatrixOperator
             obj.UseMex = true;
             obj.CVXVersion = true;
             obj.Weight = 1;
+            obj.Grad = gradient_matrix(dim(1),dim(2));
         end
 
         function res = val(obj,x)
@@ -35,8 +37,9 @@ classdef FinDiffOperator < MatrixOperator
                 res = obj.Weight*ctrdiff(x);
             else
                 dualdim=[obj.Dim, 2];
-                grad=obj.Weight*diff2d(obj.Dim, obj.Method);
-                res = obj.Weight*reshape(grad*x(:), dualdim);
+                %grad=obj.Weight*diff2d(obj.Dim, obj.Method);
+                res = obj.Weight*reshape(obj.Grad*x(:), dualdim);
+                %res = obj.Weight*reshape(grad*x(:), dualdim);
             end
 
         end
@@ -52,8 +55,9 @@ classdef FinDiffOperator < MatrixOperator
             elseif obj.UseOpt && obj.Method(1)=='c' && obj.Method(2)=='n'
                 res = obj.Weight*ctrdiff_conj(y);
             else
-                grad = obj.Weight*diff2d(obj.Dim, obj.Method);
-                res = obj.Weight*reshape(grad'*y(:), obj.Dim);
+                %grad = obj.Weight*diff2d(obj.Dim, obj.Method);
+                res = obj.Weight*reshape(obj.Grad'*y(:), obj.Dim);
+                %res = obj.Weight*reshape(grad'*y(:), obj.Dim);
             end
         end
 
