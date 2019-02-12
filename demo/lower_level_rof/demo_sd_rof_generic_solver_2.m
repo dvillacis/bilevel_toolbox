@@ -19,14 +19,14 @@ noisy = dataset.get_corrupt(1);
 
 %% Solving the Lower Level Problem
 param_solver.verbose = 2;
-param_solver.maxiter = 4000;
+param_solver.maxiter = 2000;
 param_solver.tol = 1e-3;
 
 %% Define the cell matrices
 [M,N] = size(original);
 id_op = IdentityOperator([M,N]);
 z = noisy;
-lambda = 0.1*triu(ones(M,N))+500*tril(ones(M,N));
+lambda = 0.1*triu(ones(M,N))+1.0*tril(ones(M,N));
 gradient = FinDiffOperator([M,N],'fn');
 q = zeros(M,N,2);
 alpha = ones(M,N);

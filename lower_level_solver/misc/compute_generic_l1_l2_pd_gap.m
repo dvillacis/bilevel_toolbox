@@ -41,10 +41,12 @@ M=norm(x(:));
 if isempty(FUBAR) || FUBAR<M
     FUBAR=M;
 end
-dual_reg = M*norm2(Kbb.conj(y));
+x_=Kbb.conj(y);
+dual_reg = M*norm(x_(:));
 dual = dual_1 + dual_2 + dual_reg;
 
 % Calculate the gap
+fprintf(' primal = %f, dual = %f\n',primal,dual);
 gap = primal+dual;
 
 end
