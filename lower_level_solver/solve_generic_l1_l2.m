@@ -95,10 +95,10 @@ function [sol,gap] = solve_generic_l1_l2(lambda,alpha,Ks,Bs,z,q,gamma,xinit,para
   %Kbb = cat(1,Ks{:},Bs{:});
   %y = zeros(size(Kbb,1),1);
 
-  gap = compute_generic_l1_l2_pd_gap(sol,y,Ks,Bs,lambda,alpha,z,q);
+  [gap,primal,dual] = compute_generic_l1_l2_pd_gap(sol,y,Ks,Bs,lambda,alpha,z,q);
 
   if param.verbose > 1
-    fprintf('generic_l1_l2: iter = %4d, gap = %f\n', 0, gap(1));
+    fprintf('generic_l1_l2: iter = %4d, primal = %f, dual = %f, gap = %f\n', 0,primal,dual,gap);
   end
 
   finished = 0;
@@ -117,11 +117,11 @@ function [sol,gap] = solve_generic_l1_l2(lambda,alpha,Ks,Bs,z,q,gamma,xinit,para
     % Interpolation step
     sol_ = 2*sol - sol_;
 
-    ga = compute_generic_l1_l2_pd_gap(sol,y,Ks,Bs,lambda,alpha,z,q);
+    [ga,primal,dual] = compute_generic_l1_l2_pd_gap(sol,y,Ks,Bs,lambda,alpha,z,q);
     gap = [gap, ga];
 
     if mod(k, param.check) == 0 && param.verbose > 1
-      fprintf('generic_l1_l2: iter = %4d, pseudo-gap = %f\n', k, ga);
+      fprintf('generic_l1_l2: iter = %4d, primal = %f, dual = %f, pseudo-gap = %f\n', k, primal, dual, ga);
     end
 
     % Stopping criteria

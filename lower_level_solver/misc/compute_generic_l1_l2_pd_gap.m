@@ -1,4 +1,4 @@
-function [gap] = compute_generic_l1_l2_pd_gap(x,y,Ks,Bs,lambda,alpha,z,q)
+function [gap,primal,dual] = compute_generic_l1_l2_pd_gap(x,y,Ks,Bs,lambda,alpha,z,q)
 %COMPUTE_GENERIC_L1_L2_PD_GAP Calculate the primal-dual gap for the
 %generic_l1_l2 solver.
 %   Detailed explanation goes here
@@ -10,7 +10,7 @@ gamma = 0.01;
 primal_1 = 0;
 for k=1:length(Ks)
     t = Ks{k}.val(x)-z;
-    primal_1 = primal_1 + sum(lambda{k}(:) .* (norm(t(:)).^2));
+    primal_1 = primal_1 + sum(lambda{k}(:) .* (t(:).^2));
 end
 primal_2 = 0;
 for l = 1:length(Bs)
@@ -46,7 +46,6 @@ dual_reg = M*norm(x_(:));
 dual = dual_1 + dual_2 + dual_reg;
 
 % Calculate the gap
-fprintf(' primal = %f, dual = %f\n',primal,dual);
 gap = primal+dual;
 
 end
