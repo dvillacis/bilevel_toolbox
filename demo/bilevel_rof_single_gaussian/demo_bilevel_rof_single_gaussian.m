@@ -21,13 +21,13 @@ bilevel_param.verbose = 2;
 bilevel_param.maxit = 100;
 bilevel_param.tol = 1e-2;
 bilevel_param.algo = 'NONSMOOTH_TRUST_REGION';
-bilevel_param.radius = 1;
+bilevel_param.radius = 3;
 bilevel_param.minradius = 0.1;
 bilevel_param.gamma1 = 0.5;
 bilevel_param.gamma2 = 1.5;
 bilevel_param.eta1 = 0.10;
 bilevel_param.eta2 = 0.90;
-lambda = 18.0;
+lambda = 3.0;
 [sol,info] = solve_bilevel(lambda,lower_level_problem,upper_level_problem,bilevel_param);
 
 optimal_sol = solve_lower_level(sol,dataset.get_corrupt(1));
@@ -51,6 +51,7 @@ end
 function u = solve_lower_level(lambda,noisy)
     param_solver.verbose = 0;
     param_solver.maxiter = 2000;
+    param_solver.tol = 1e-2;
     %% Define the cell matrices
     [M,N] = size(noisy);
     id_op = IdentityOperator([M,N]);
@@ -60,7 +61,7 @@ function u = solve_lower_level(lambda,noisy)
     q = zeros(M,N,2);
     alpha = 1;
     gamma = 0;
-    [u,~] = solve_generic_l1_l2({lambda},{alpha},{id_op},{gradient_op},z,q,gamma,noisy,param_solver);
+    [u,~] = solve_generic_l1_l2({lambda},{alpha},{id_op},{gradient_op},z,q,gamma,0*noisy,param_solver);
 end
 
 function nXi = xi(p,m,n)

@@ -52,17 +52,15 @@ function [sol,s] = nonsmooth_trust_region_algorithm(lower_level_problem,upper_le
         end
 
         % Trust Region Step Calculation (Solving TR Subproblem)
-        step = tr_subproblem(s.grad,s.hess,s.radius);
-
-        % Project the step to the positive quadrant
-        step(sol+step < 0) = 0;
+        %step = tr_subproblem(s.grad,s.hess,s.radius);
+        step = tr_generalized_cauchy(sol,s.grad,s.hess,s.radius,cost);
 
         % Record previous step
         s.solprev = sol;
         s.gradprev = s.grad;
 
         % Trust Region Modification
-        pred = -s.grad'*step-0.5*step'*s.hess*step;
+        pred = -s.grad(:)'*step(:);%-0.5*step'*s.hess*step;
         next_u = lower_level_problem.solve(sol+step,upper_level_problem.dataset);
         next_cost = upper_level_problem.eval(next_u,sol+step,upper_level_problem.dataset);
         ared = cost-next_cost;
@@ -96,7 +94,7 @@ function [sol,s] = nonsmooth_trust_region_algorithm(lower_level_problem,upper_le
         %psi = tr_complex_stationarity_measure(s.grad,s.hess);
 
         % Trust Region Modification
-        pred = -s.grad'*step-0.5*step'*s.hess*step;
+        pred = -s.grad(:)'*step(:);%-0.5*step'*s.hess*step;
         next_u = lower_level_problem.solve(sol+step,upper_level_problem.dataset);
         next_cost = upper_level_problem.eval(next_u,sol+step,upper_level_problem.dataset);
         ared = cost-next_cost;
@@ -140,6 +138,52 @@ function step = tr_subproblem(grad,hess,radius)
   else
     step = sc;
   end
+end
+
+function x = projection_linf_pos(x,radius)
+    x_max = max(x-radius,0);
+    [r_max,c_max,v_max] = find(x<=x_max);
+    x(r_max,c_max) = x_max(r_max,c_max);
+    x_min = x+radius;
+    [r_min,c_min,i_min] = find(x>=x_min);
+    x(r_min,c_min) = x_min(r_min,c_min);
+end
+
+function step = tr_generalized_cauchy(sol,grad,hess,radius,cost)
+    kubs = 0.1;
+    klbs = 0.2;
+    kfrd = 0.8;
+    kepp = 0.25;
+    tmin = 0;
+    tmax = Inf;
+    t = radius/norm(grad(:));
+    maxit = 1000;
+    it=0;
+    while it < maxit
+        sol_ = projection_linf_pos(sol-t*grad,radius); % Project into the positive half space intersection inf ball.
+        sk = sol_-sol;
+        mk = cost+grad(:)'*sk(:);
+        if norm(sk(:))>radius || mk > cost + kubs*grad(:)'*sk(:)
+            tmax = t;
+        else
+            step = sk;
+            break;
+%             if norm(sk(:))>=kfrd*radius || mk >= cost + klbs*grad(:)'*sk(:)
+%                 step = sk;
+%                 break
+%             else
+%                 tmin = t;
+%             end
+        end
+        
+        if tmax == Inf
+            t = 2*t;
+        else   
+            t = 0.5*(tmin+tmax);
+        end
+        it = it + 1;
+    end
+    
 end
 
 function [c,ceq] = norm_constraint(x,radius)

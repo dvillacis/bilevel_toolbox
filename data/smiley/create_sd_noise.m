@@ -7,8 +7,8 @@ smiley = 1-imbinarize(smiley,1e-4);
 [m,n] = size(smiley);
 black_pixels = smiley == 1;
 % Adding gaussian noise std 0.1 to black pixels
-noise1 = 0.2*rand(m,0.5*n);
-noise2 = 0.3*rand(m,0.5*n);
+noise1 = 0.1*rand(m,0.5*n);
+noise2 = 0.6*rand(m,0.5*n);
 noise = horzcat(noise1,noise2);
 noise(black_pixels) = 0;
 smiley_noisy = smiley + noise;

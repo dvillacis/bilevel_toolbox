@@ -9,43 +9,41 @@ init_bilevel_toolbox();
 dataset = DatasetInFolder('data/smiley','*_smiley_original.png','*_smiley_noisy.png');
 
 %% Load input image
-original = dataset.get_target(1);
-noisy = dataset.get_corrupt(1);
-[M,N]=size(original);
+% original = dataset.get_target(1);
+% noisy = dataset.get_corrupt(1);
+[M,N]=size(dataset.get_target(1));
 
 % Define lower level problem
-lower_level_problem.solve = @(lambda) solve_lower_level(lambda,noisy);
+lower_level_problem.solve = @(lambda,dataset) solve_lower_level(lambda,dataset.get_corrupt(1));
 
 % Define upper level problem
-upper_level_problem.eval = @(u,lambda) 0.5*norm(u(:)-original(:)).^2 + 0.5*0.0001*norm(lambda).^2;
-upper_level_problem.gradient = @(u,lambda,params) solve_gradient(u,lambda,original,noisy,params);
+upper_level_problem.eval = @(u,lambda,dataset) eval_upper_level(u,lambda,dataset);
+upper_level_problem.gradient = @(u,lambda,dataset,params) solve_gradient(u,lambda,dataset,params);
 upper_level_problem.dataset = dataset;
 
 %% Solving the bilevel problem
 bilevel_param.verbose = 2;
-bilevel_param.maxit = 20;
+bilevel_param.maxit = 50;
 bilevel_param.tol = 1e-2;
 bilevel_param.algo = 'NONSMOOTH_TRUST_REGION';
-bilevel_param.radius = 3000;
-bilevel_param.minradius = 1;
+bilevel_param.radius = 5.0;
+bilevel_param.minradius = 1.0;
 bilevel_param.gamma1 = 0.5;
 bilevel_param.gamma2 = 1.5;
 bilevel_param.eta1 = 0.10;
-bilevel_param.eta2 = 0.90;
-lambda1 = 100*ones(0.5*M*N,1);
-lambda2 = 200*ones(0.5*M*N,1);
-lambda = vertcat(lambda1,lambda2); % Initial guess
-%lambda = 0.1*rand(M*N,1);
+bilevel_param.eta2 = 0.60;
+lambda = 8.0*triu(ones(M,N))+2.0*tril(ones(M,N)); % Initial guess
+%lambda = rand(M,N);
 [sol,info] = solve_bilevel(lambda,lower_level_problem,upper_level_problem,bilevel_param);
 
-optimal_sol = solve_lower_level(sol,noisy);
-optimal_sol = reshape(optimal_sol,M,N);
+optimal_sol = solve_lower_level(sol,dataset.get_corrupt(1));
+
 %% Plotting the solution
 figure(1)
 subplot(1,3,1)
-imagesc_gray(original,1,'Original Image');
+imagesc_gray(dataset.get_target(1),1,'Original Image');
 subplot(1,3,2)
-imagesc_gray(noisy,1,'Noisy Image');
+imagesc_gray(dataset.get_corrupt(1),1,'Noisy Image');
 subplot(1,3,3)
 imagesc_gray(optimal_sol,1,'Denoised Image');
 
@@ -54,6 +52,12 @@ figure(2)
 surf(a,b,reshape(sol,M,N));
 
 %% Auxiliary functions
+function cost = eval_upper_level(u,lambda,dataset)
+    original = dataset.get_target(1);
+    %cost = 0.5*norm(u(:)-original(:)).^2 + 0.0001*norm(lambda);
+    cost = 0.5*norm(u(:)-original(:)).^2 + 0.5*0.1*norm(lambda(:)).^2;
+end
+
 
 function y = solve_lower_level(lambda,noisy)
   %% Solving the Lower Level Problem
@@ -63,15 +67,15 @@ function y = solve_lower_level(lambda,noisy)
 
   %% Define the cell matrices
   [M,N] = size(noisy);
-  K = speye(M*N);
-  z = noisy(:);
-  B = gradient_matrix(M,N);
-  q = zeros(2*M*N,1);
-  alpha = reshape(ones(M,N),M*N,1);
+  id_op = IdentityOperator([M,N]);
+  z = noisy;
+  gradient_op = FinDiffOperator([M,N],'fn');
+  q = zeros(M,N,2);
+  alpha = ones(M,N);
   gamma = 0; % NO Huber regularization
 
   %% Call the solver
-  [y,~] = solve_generic_l1_l2({lambda},{alpha},{K},{B},z,q,gamma,rand(M*N,1),param_solver);
+  [y,~] = solve_generic_l1_l2({lambda},{alpha},{id_op},{gradient_op},z,q,gamma,0*noisy,param_solver);
 end
 
 function nXi = xi(p,m,n)
@@ -90,11 +94,14 @@ function prod = outer_product(p,q,m,n)
   prod = [spdiags(a,0,m*n,m*n) spdiags(b,0,m*n,m*n); spdiags(c,0,m*n,m*n) spdiags(d,0,m*n,m*n)];
 end
 
-function grad = solve_gradient(u,lambda,original,noisy,params)
+function grad = solve_gradient(u,lambda,dataset,params)
+
+    original = dataset.get_target(1);
+    noisy = dataset.get_corrupt(1);
 
     [M,N] = size(noisy);
     nabla = gradient_matrix(M,N);
-    A = spdiags(lambda,0,M*N,M*N); % Build diagonal matrix with parameters to estimate
+    A = spdiags(lambda(:),0,M*N,M*N); % Build diagonal matrix with parameters to estimate
     B = nabla';
     Ku = nabla*u(:); %Discrete gradient matrix
     nKu = xi(Ku,M,N); %Discrete euclidean norm
@@ -166,6 +173,6 @@ function grad = solve_gradient(u,lambda,original,noisy,params)
     end
 
     % Calculating the gradient
-    beta = 0.0001;
-    grad = (noisy(:)-u(:)).*adj + beta*lambda;
+    beta = 0.1;
+    grad = (noisy-u).*reshape(adj,M,N) + beta*lambda;
 end

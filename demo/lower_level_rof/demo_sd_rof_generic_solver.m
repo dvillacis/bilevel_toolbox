@@ -21,7 +21,7 @@ noisy = dataset.get_corrupt(1);
 param_solver.verbose = 2;
 param_solver.maxiter = 2000;
 param_solver.tol = 1e-2;
-param_solver.check = 1;
+%param_solver.check = 1;
 
 %% Define the cell matrices
 [M,N] = size(original);
@@ -36,7 +36,7 @@ alpha = 0.05*triu(ones(M,N))+1.5*tril(ones(M,N));
 gamma = 0; % NO Huber regularization
 
 %% Call the solver
-[sol,gap] = solve_generic_l1_l2({lambda},{alpha},{id_op},{gradient},z,q,gamma,noisy,param_solver);
+[sol,gap] = solve_generic_l1_l2({lambda},{alpha},{id_op},{gradient},z,q,gamma,0*noisy,param_solver);
 
 %% Plotting the solution
 figure(1)
