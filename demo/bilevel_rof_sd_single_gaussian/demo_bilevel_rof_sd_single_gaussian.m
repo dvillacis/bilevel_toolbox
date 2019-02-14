@@ -5,8 +5,8 @@ clc;
 init_bilevel_toolbox();
 
 %% Load dataset
-%dataset = DatasetInFolder('data/circle_dataset_single_gaussian','*_circle_original.png','*_circle_noisy.png');
-dataset = DatasetInFolder('data/smiley','*_smiley_original.png','*_smiley_noisy.png');
+dataset = DatasetInFolder('data/circle_dataset_single_gaussian','*_circle_original.png','*_circle_noisy.png');
+%dataset = DatasetInFolder('data/smiley','*_smiley_original.png','*_smiley_noisy.png');
 
 %% Load input image
 % original = dataset.get_target(1);
@@ -23,17 +23,17 @@ upper_level_problem.dataset = dataset;
 
 %% Solving the bilevel problem
 bilevel_param.verbose = 2;
-bilevel_param.maxit = 50;
+bilevel_param.maxit = 100;
 bilevel_param.tol = 1e-2;
 bilevel_param.algo = 'NONSMOOTH_TRUST_REGION';
-bilevel_param.radius = 5.0;
-bilevel_param.minradius = 1.0;
+bilevel_param.radius = 100.0;
+bilevel_param.minradius = 0.1;
 bilevel_param.gamma1 = 0.5;
 bilevel_param.gamma2 = 1.5;
 bilevel_param.eta1 = 0.10;
 bilevel_param.eta2 = 0.60;
-lambda = 8.0*triu(ones(M,N))+2.0*tril(ones(M,N)); % Initial guess
-%lambda = rand(M,N);
+%lambda = 80.0*triu(ones(M,N))+0.9*tril(ones(M,N)); % Initial guess
+lambda = rand(M,N);
 [sol,info] = solve_bilevel(lambda,lower_level_problem,upper_level_problem,bilevel_param);
 
 optimal_sol = solve_lower_level(sol,dataset.get_corrupt(1));

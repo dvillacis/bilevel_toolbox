@@ -67,7 +67,7 @@ function [sol,s] = nonsmooth_trust_region_algorithm(lower_level_problem,upper_le
         rho = ared/pred;
 
         if size(sol,1)>1 || size(sol,2)>1
-            fprintf('l2_cost = %f, norm_sol = %f, norm_grad = %f, radius = %f, rho = %f\n',cost,norm(sol),norm(s.grad),s.radius,rho);
+            fprintf('l2_cost = %f, norm_sol = %f, norm_grad = %f, radius = %f, rho = %f, norm_step = %f\n',cost,norm(sol),norm(s.grad),s.radius,rho,norm(step));
         else
             fprintf('l2_cost = %f, sol = %f, grad = %f, radius = %f, rho = %f\n',cost,sol,s.grad,s.radius,rho);
         end
@@ -90,7 +90,8 @@ function [sol,s] = nonsmooth_trust_region_algorithm(lower_level_problem,upper_le
         gradient_parameters.complex_model = true;
         s.grad = upper_level_problem.gradient(u,sol,upper_level_problem.dataset,gradient_parameters);
 
-        step = tr_subproblem(s.grad,s.hess,s.radius);
+        %step = tr_subproblem(s.grad,s.hess,s.radius);
+        step = tr_generalized_cauchy(sol,s.grad,s.hess,s.radius,cost);
         %psi = tr_complex_stationarity_measure(s.grad,s.hess);
 
         % Trust Region Modification
@@ -101,7 +102,7 @@ function [sol,s] = nonsmooth_trust_region_algorithm(lower_level_problem,upper_le
         rho = ared/pred;
 
         if size(sol,1)>1 || size(sol,2)>1
-            fprintf('(COMPLEX): l2_cost = %f, norm_sol = %f, norm_grad = %f, radius = %f, rho = %f\n',cost,norm(sol),norm(s.grad),s.radius,rho);
+            fprintf('(COMPLEX): l2_cost = %f, norm_sol = %f, norm_grad = %f, radius = %f, rho = %f, norm_step = %f\n',cost,norm(sol),norm(s.grad),s.radius,rho,norm(step));
         else
             fprintf('(COMPLEX): l2_cost = %f, sol = %f, grad = %f, radius = %f, rho = %f\n',cost,sol,s.grad,s.radius,rho);
         end
@@ -140,13 +141,9 @@ function step = tr_subproblem(grad,hess,radius)
   end
 end
 
-function x = projection_linf_pos(x,radius)
-    x_max = max(x-radius,0);
-    [r_max,c_max,v_max] = find(x<=x_max);
-    x(r_max,c_max) = x_max(r_max,c_max);
-    x_min = x+radius;
-    [r_min,c_min,i_min] = find(x>=x_min);
-    x(r_min,c_min) = x_min(r_min,c_min);
+function y = projection_linf_pos(x0,x,radius)
+    y = x0 + radius*((x-x0)./norm(x(:)-x0(:))); % Project l2 ball
+    y(y<0)=0; % Project into the positive quadrant
 end
 
 function step = tr_generalized_cauchy(sol,grad,hess,radius,cost)
@@ -159,21 +156,20 @@ function step = tr_generalized_cauchy(sol,grad,hess,radius,cost)
     t = radius/norm(grad(:));
     maxit = 1000;
     it=0;
+    step = zeros(size(sol));
     while it < maxit
-        sol_ = projection_linf_pos(sol-t*grad,radius); % Project into the positive half space intersection inf ball.
+        sol_ = projection_linf_pos(sol,sol-t*grad,radius); % Project into the positive half space intersection inf ball.
         sk = sol_-sol;
         mk = cost+grad(:)'*sk(:);
         if norm(sk(:))>radius || mk > cost + kubs*grad(:)'*sk(:)
             tmax = t;
         else
-            step = sk;
-            break;
-%             if norm(sk(:))>=kfrd*radius || mk >= cost + klbs*grad(:)'*sk(:)
-%                 step = sk;
-%                 break
-%             else
-%                 tmin = t;
-%             end
+            if norm(sk(:))>=kfrd*radius || mk >= cost + klbs*grad(:)'*sk(:)
+                step = sk;
+                break
+            else
+                tmin = t;
+            end
         end
         
         if tmax == Inf
