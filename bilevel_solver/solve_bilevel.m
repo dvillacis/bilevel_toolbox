@@ -87,6 +87,7 @@ function [sol,info] = solve_bilevel(x_0, lower_level_problem, upper_level_proble
     info.time = toc(t1);
     info.l2_cost_history = s.l2_cost_history;
     info.sol_history = s.sol_history;
+    info.u_history = s.u_history;
 
     % Print summary
     if param.verbose>0

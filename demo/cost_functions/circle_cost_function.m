@@ -17,7 +17,7 @@ noisy = dataset.get_corrupt(1);
 %% Setup for the lower level problem
 lower_level_problem.solve = @(lambda) solve_lower_level(lambda,noisy);
 
-r = 9.0:0.1:10;
+r = 1.0:0.5:100;
 l2_vals = zeros(length(r),1);
 ssim_vals = zeros(length(r),1);
 psnr_vals = zeros(length(r),1);
@@ -55,17 +55,16 @@ function sol = solve_lower_level(lambda,noisy)
 
     % Define the cell matrices
     [M,N] = size(noisy);
-    K = speye(M*N);
-    z = noisy(:);
+    id_op = IdentityOperator([M,N]);
+    z = noisy;
     %lambda = 3;
     gradient = FinDiffOperator([M,N],'fn');
-    B = gradient.matrix();
-    q = zeros(2*M*N,1);
+    q = zeros(M,N,2);
     alpha = 1;
 
     gamma = 0; % NO Huber regularization
 
     % Call the solver
-    [sol,~] = solve_generic_l1_l2({lambda},{alpha},{K},{B},z,q,gamma,0*noisy(:),param_solver);
+    [sol,~] = solve_generic_l1_l2({lambda},{alpha},{id_op},{gradient},z,q,gamma,0*noisy,param_solver);
     sol = reshape(sol,M,N);
 end

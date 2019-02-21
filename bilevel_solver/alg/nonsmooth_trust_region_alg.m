@@ -13,6 +13,7 @@ function [sol,s,param] = nonsmooth_trust_region_initialize(x_0,lower_level_probl
   s.radius = param.radius;
   s.hess = 0;
   s.res = 1;
+  s.u_history = lower_level_problem.solve(sol,upper_level_problem.dataset);
 
   % Test if the min radius is defined
   if ~isfield(param,'minradius')
@@ -25,6 +26,7 @@ function [sol,s] = nonsmooth_trust_region_algorithm(lower_level_problem,upper_le
 
     % Solving the state equation (lower level solver)
     u = lower_level_problem.solve(sol,upper_level_problem.dataset);
+    s.u_history = cat(3,s.u_history,u);
 
     % Getting current cost
     cost = upper_level_problem.eval(u,sol,upper_level_problem.dataset);
@@ -76,7 +78,11 @@ function [sol,s] = nonsmooth_trust_region_algorithm(lower_level_problem,upper_le
         if rho > param.eta2
           sol = sol + step;
           s.radius = param.gamma2*s.radius;
-          s.sol_history = [s.sol_history sol];
+          if size(sol,1)>1 || size(sol,2)>1
+              s.sol_history = cat(3,s.sol_history,sol);
+          else
+              s.sol_history = [s.sol_history sol];
+          end
         elseif rho <= param.eta1
           s.radius = param.gamma1*s.radius;
         else
@@ -94,6 +100,10 @@ function [sol,s] = nonsmooth_trust_region_algorithm(lower_level_problem,upper_le
         step = tr_generalized_cauchy(sol,s.grad,s.hess,s.radius,cost);
         %psi = tr_complex_stationarity_measure(s.grad,s.hess);
 
+        % Get real gradient at step
+        %gradient_parameters.complex_model = false;
+        %s.grad = upper_level_problem.gradient(u,sol,upper_level_problem.dataset,gradient_parameters);
+        
         % Trust Region Modification
         pred = -s.grad(:)'*step(:);%-0.5*step'*s.hess*step;
         next_u = lower_level_problem.solve(sol+step,upper_level_problem.dataset);
@@ -111,7 +121,11 @@ function [sol,s] = nonsmooth_trust_region_algorithm(lower_level_problem,upper_le
         if rho > param.eta2
           sol = sol + step;
           s.radius = param.gamma2*s.radius;
-          s.sol_history = [s.sol_history sol];
+          if size(sol,1)>1 || size(sol,2)>1
+              s.sol_history = cat(3,s.sol_history,sol);
+          else
+              s.sol_history = [s.sol_history sol];
+          end
         elseif rho <= param.eta1
           s.radius = param.gamma1*s.radius;
         else
@@ -141,9 +155,15 @@ function step = tr_subproblem(grad,hess,radius)
   end
 end
 
-function y = projection_linf_pos(x0,x,radius)
-    y = x0 + radius*((x-x0)./norm(x(:)-x0(:))); % Project l2 ball
-    y(y<0)=0; % Project into the positive quadrant
+function x = projection_linf_pos(x0,x,radius)
+    % Project into the l infinity norm intersected with the positive
+    % quadrant
+    x_f = x0+radius;
+    x_b = max(x0-radius,0);
+    ind_f = find(x>x_f);
+    ind_b = find(x<x_b);
+    x(ind_f) = x_f(ind_f);
+    x(ind_b) = x_b(ind_b);
 end
 
 function step = tr_generalized_cauchy(sol,grad,hess,radius,cost)
@@ -164,12 +184,14 @@ function step = tr_generalized_cauchy(sol,grad,hess,radius,cost)
         if norm(sk(:))>radius || mk > cost + kubs*grad(:)'*sk(:)
             tmax = t;
         else
-            if norm(sk(:))>=kfrd*radius || mk >= cost + klbs*grad(:)'*sk(:)
-                step = sk;
-                break
-            else
-                tmin = t;
-            end
+%             if norm(sk(:))>=kfrd*radius || mk >= cost + klbs*grad(:)'*sk(:)
+%                 step = sk;
+%                 break
+%             else
+%                 tmin = t;
+%             end
+            step = sk;
+            break;
         end
         
         if tmax == Inf
