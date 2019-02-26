@@ -19,16 +19,16 @@ upper_level_problem.dataset = dataset;
 
 %% Solving the bilevel problem
 bilevel_param.verbose = 2;
-bilevel_param.maxit = 100;
+bilevel_param.maxit = 400;
 bilevel_param.tol = 1e-3;
 bilevel_param.algo = 'NONSMOOTH_TRUST_REGION';
-bilevel_param.radius = 0.1;
+bilevel_param.radius = 0.5;
 bilevel_param.minradius = 0.1;
 bilevel_param.gamma1 = 0.5;
 bilevel_param.gamma2 = 1.5;
 bilevel_param.eta1 = 0.10;
-bilevel_param.eta2 = 0.70;
-lambda = 7;
+bilevel_param.eta2 = 0.90;
+lambda = 3;
 [sol,info] = solve_bilevel(lambda,lower_level_problem,upper_level_problem,bilevel_param);
 
 optimal_sol = solve_lower_level(sol,dataset.get_corrupt(1));
