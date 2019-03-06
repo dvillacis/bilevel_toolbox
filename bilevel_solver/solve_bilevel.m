@@ -1,4 +1,16 @@
 function [sol,info] = solve_bilevel(x_0, lower_level_problem, upper_level_problem, param)
+% SOLVE_BILEVEL Main function for solving a bilevel optimization problem.
+% This solver receives an initial datum, a lower and upper level problem description
+% and a set of parameters and returns the optimal solution and a set of specific information.
+% INPUTS
+%   x_0: Initial datum
+%   lower_level_problem: LowerLevelProblem structure
+%   upper_level_problem: UpperLevelProblem structure
+%   param:  Bilevel Algorithm parameters
+% OUTPUTS
+%   sol:    Optimal solution obtained
+%   info:   A set of historic information and data about the execution of the algorithm
+%
 
     % Start the counter
     t1 = tic;

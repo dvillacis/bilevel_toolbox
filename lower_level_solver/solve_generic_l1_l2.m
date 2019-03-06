@@ -1,5 +1,5 @@
 function [sol,gap] = solve_generic_l1_l2(lambda,alpha,Ks,Bs,z,q,gamma,xinit,param)
-% SOLVE_GENERIC_L1_L2 Genric solver for several image processing problems
+% SOLVE_GENERIC_L1_L2 Generic solver for several image processing problems
 % This solver receives an abstract initial structure to support different
 % image processing models and solves those by using a Chabolle-Pock algorithm.
 % INPUTS

@@ -4,6 +4,13 @@ This is a MATLAB Toolbox designed to test different bilevel optimization problem
 ## Installation
 To use the toolbox, please execute the script `init_bilevel_toolbox.m` to place all the required scripts into the MATLAB path.
 
+## Dataset
+We will use this bilevel optimization techniques in the context of machine learning. In this scenario we use *training data* to define an upper level cost function. In order to provide a helpful interface to this training data, a Dataset class was build and can be instantiated as follows
+```matlab
+dataset = DatasetInFolder(<training_data_path>,<target_regex>,<data_regex>)
+```
+This class stores tha path where the data is located, as well as the regular expression required to identify the target and the data.
+
 ## Lower Level Problem
 In order to define the lower level problem, we need to create a struct that contains a SOLVE method
 ```matlab
