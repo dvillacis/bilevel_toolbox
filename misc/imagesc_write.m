@@ -1,5 +1,5 @@
-function [] = imagesc_gray( im,nfig,tit,subplotn,clim )
-%IMAGESCGRAY Display an image in gray scale
+function [] = imagesc_write( im,path,nfig,tit,subplotn,clim )
+%IMAGESCGRAY Write an image in gray scale
 %   Usage: imagescgray(im);
 %          imagescgray(im,nfig);
 %          imagescgray(im,nfig,title);
@@ -40,29 +40,31 @@ function [] = imagesc_gray( im,nfig,tit,subplotn,clim )
 % Date  : 14.03.2013
 
 
-if nargin > 1
+if nargin > 2
     if nfig == 0
         figure();
     else
         figure(nfig);
     end
 end
-if nargin > 3
+if nargin > 4
     subplot(subplotn)
 end
-if nargin > 4
+if nargin > 5
     imagesc(im, clim);
 else
     imagesc(im);
 end
 colormap gray;
 hold on;
-if nargin > 2
+if nargin > 3
     title(tit);
 end
 axis off;
 axis image;
-X = get(gcf, 'PaperPosition');
-set(gcf, 'PaperPosition', [ X(1) X(2) .5 * X(3) .5 * X(4) ] );
+
+im = im - min (im(:));
+im = im / max (im(:));
+imwrite (im, path);
 
 end

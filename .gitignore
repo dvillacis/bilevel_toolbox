@@ -2,3 +2,4 @@
 *.mat
 data/playing_cards/*.tif
 .DS_Store
+*.gif
