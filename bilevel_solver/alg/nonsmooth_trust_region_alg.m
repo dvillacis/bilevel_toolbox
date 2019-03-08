@@ -103,7 +103,7 @@ function [sol,s] = nonsmooth_trust_region_algorithm(lower_level_problem,upper_le
         % Get real gradient at step
         %gradient_parameters.complex_model = false;
         %s.grad = upper_level_problem.gradient(u,sol,upper_level_problem.dataset,gradient_parameters);
-        
+
         % Trust Region Modification
         pred = -s.grad(:)'*step(:);%-0.5*step'*s.hess*step;
         next_u = lower_level_problem.solve(sol+step,upper_level_problem.dataset);
@@ -193,15 +193,15 @@ function step = tr_generalized_cauchy(sol,grad,hess,radius,cost)
             step = sk;
             break;
         end
-        
+
         if tmax == Inf
             t = 2*t;
-        else   
+        else
             t = 0.5*(tmin+tmax);
         end
         it = it + 1;
     end
-    
+
 end
 
 function [c,ceq] = norm_constraint(x,radius)
