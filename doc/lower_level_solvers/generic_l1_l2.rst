@@ -1,11 +1,5 @@
-latex input:		../mmd-article-header
-Title:				Generic l1-l2 solver
-Base Header Level:	2
-LaTeX Mode:			memoir
-latex input:		../mmd-article-begin-doc
-latex footer:		../mmd-memoir-footer
-
-# Generic l1 l2 Solver
+Generic l1 l2 Solver
+********************
 This solver is a generic lower level solver designed to solve a wide variety of image processing problems. The abstract structure has the following form
 
 \\[ f(x) = \sum_{k=1}^N \alpha_k \|A_k x -z_k\|^2 + \sum_{l=1}^M \beta_l \|B_l x - z_l\| \\]
