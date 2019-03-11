@@ -49,3 +49,17 @@ bilevel_param.eta2 = 0.90;
 % Solve the bilevel problem
 [sol,info] = solve_bilevel(u,lower_level_problem,upper_level_problem,bilevel_param);
 ```
+
+## Original papers
+
+  1. J.C. de los Reyes and C.-B. Schönlieb, Image denoising: learning the noise model via nonsmooth PDE-constrained optimization, Inverse Problems in Imaging, 7 (4) (2013).
+  DOI: [10.3934/ipi.2013.7.1183](http://dx.doi.org/10.3934/ipi.2013.7.1183).
+
+  2. J. C. de Los Reyes, C.-B. Schönlieb and T. Valkonen, Bilevel parameter learning for higher-order total variation regularisation models, Journal of Mathematical Imaging and Vision 57 (2017), 1–25.
+  DOI: [10.1007/s10851-016-0662-8](http://dx.doi.org/10.1007/s10851-016-0662-8).
+
+  3. J. C. de Los Reyes, C.-B. Schönlieb and T. Valkonen, The structure of optimal parameters for image restoration problems, Journal of Mathematical Analysis and Applications 434 (2016), 464–500.
+  DOI: [10.1016/j.jmaa.2015.09.023](http://dx.doi.org/10.1016/j.jmaa.2015.09.023).
+
+  4. L. Calatroni, C. Cao, J. C. de Los Reyes, C.-B. Schönlieb and T. Valkonen, Bilevel approaches for learning of variational imaging models (2015). Submitted.
+  arXiv: [1505.02120](http://arxiv.org/abs/1505.02120).
