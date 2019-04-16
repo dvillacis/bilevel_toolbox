@@ -1,10 +1,9 @@
-function [gap, primal, dual] = compute_rof_pd_gap(nabla, nablat, u, p, f, alpha, M, N)
+function [gap, primal, dual] = compute_rof_pd_gap(val_u, u, conj_p, f, alpha)
 
-  div_p = nablat*p;
-  var_u = nabla*u;
+  norm_val_u = rssq(val_u,3);
   
-  primal = alpha * sum(sqrt(var_u(1:M*N).^2 + var_u(M*N+1:end).^2)) + 0.5 * sumsqr(u-f);
-  dual   = f'*div_p - 0.5 * sumsqr(div_p);
+  primal = alpha * sum(norm_val_u(:)) + 0.5 * sumsqr(u(:)-f(:));
+  dual   = f(:)'*conj_p(:) - 0.5 * sumsqr(conj_p(:));
   
   gap = primal-dual;
 end

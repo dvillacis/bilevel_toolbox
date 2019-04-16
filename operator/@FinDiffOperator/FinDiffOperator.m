@@ -1,4 +1,4 @@
-classdef FinDiffOperator < MatrixOperator
+classdef FinDiffOperator
     %FINDIFFOPERATOR Finite Differences Operator
     %   Finite differences matrix operator
 
@@ -22,7 +22,7 @@ classdef FinDiffOperator < MatrixOperator
             obj.UseMex = true;
             obj.CVXVersion = true;
             obj.Weight = 1;
-            obj.Grad = gradient_matrix(dim(1),dim(2));
+            %obj.Grad = gradient_matrix(dim(1),dim(2));
         end
 
         function res = val(obj,x)
@@ -61,14 +61,15 @@ classdef FinDiffOperator < MatrixOperator
             end
         end
 
-        function grad = matrix(obj)
-            %MATRIX Return a matrix representation of the operator
-            %   Detailed explanation goes here
-            grad = diff2d(obj.Dim,obj.Method);
-        end
+%         function grad = matrix(obj)
+%             %MATRIX Return a matrix representation of the operator
+%             %   Detailed explanation goes here
+%             grad = diff2d(obj.Dim,obj.Method);
+%         end
 
         function bnd = bound(obj)
-            bnd = norm(obj.matrix());
+            %bnd = norm(obj.matrix());
+            bnd = sqrt(8);
         end
     end
 
