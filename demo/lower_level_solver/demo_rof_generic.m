@@ -6,15 +6,16 @@ dataset = DatasetInFolder('data/circle_dataset_single_gaussian','*_circle_origin
 
 %% Load image
 noisy = dataset.get_corrupt(1);
+[M,N] = size(noisy);
 
 %% Solver Parameters
 param.verbose = 2;
 param.maxiter = 2000;
 param.check = 200;
 
-id_op = IdentityOperator(size(noisy));
-grad_op = FinDiffOperator(size(noisy),'fn');
-q = zeros(size(noisy,1),size(noisy,2),2);
+id_op = IdentityOperator([M,N]);
+grad_op = FinDiffOperator([M,N],'fn');
+q = zeros(M,N,2);
 
 alpha = 1;
 lambda = 4.5;

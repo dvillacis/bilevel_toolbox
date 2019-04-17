@@ -6,7 +6,7 @@ function [sol,gap] = solve_sd_rof_cp_single_gaussian(f,param)
   end
 
   % Test maxiter parameter
-  if ~isfield(param,'maxit')
+  if ~isfield(param,'maxiter')
     param.maxiter = 1000;
   end
 
@@ -26,19 +26,16 @@ function [sol,gap] = solve_sd_rof_cp_single_gaussian(f,param)
   end
 
   % Test for a vectorial alpha
-  if ~isvector(param.alpha)
-    error('The learning parameter alpha must ve a vector');
+  if ~ismatrix(param.alpha)
+    error('The learning parameter alpha must ve a matrix');
   end
 
 
   [M, N] = size(f);
-  f = f(:);
 
-  gradient = FinDiffOperator([M,N],'fn');
-  nabla = gradient.matrix();
-  nablat = nabla';
+  op = FinDiffOperator([M,N],'fn');
 
-  p = zeros(M*N*2,1);
+  p = zeros(M,N);
   sol = f;
   sol_ = sol;
   L = sqrt(8);
@@ -55,16 +52,17 @@ function [sol,gap] = solve_sd_rof_cp_single_gaussian(f,param)
 
   for k = 1:param.maxiter
 
-    p = p + sigma*nabla*sol_;
-    p = reshape(p,M*N,2);
-    p = reshape(bsxfun(@rdivide,p,max(1, b.*rssq(p,2))), M*N*2,1);
+    val_u = op.val(sol_);
+    p = p + sigma*val_u;
+    p = bsxfun(@rdivide,p,max(1,b*rssq(p,3)));
 
+    conj_p = op.conj(p);
     sol_ = sol;
-    sol = sol - tau*nablat*p;
+    sol = sol - tau*conj_p;
     sol = a*(sol+tau*f);
     sol_ = 2*sol -sol_;
 
-    ga = compute_sd_rof_pd_gap(nabla, nablat, sol, p, f, param.alpha, M, N);
+    ga = compute_sd_rof_pd_gap(val_u, sol, conj_p, f, param.alpha);
 
     gap = [gap, ga];
 
@@ -87,4 +85,15 @@ function [sol,gap] = solve_sd_rof_cp_single_gaussian(f,param)
     fprintf(' Execution Time: %f \n\n', toc(t1));
   end
 
+end
+
+function [gap, primal, dual] = compute_sd_rof_pd_gap(val_u, u, conj_p, f, alpha)
+
+  norm_val_u = rssq(val_u,3);
+  
+  primal = sum(alpha(:) .* norm_val_u(:)) + 0.5 * sumsqr(u(:)-f(:));
+  dual   = f(:)'*conj_p(:) - 0.5 * sumsqr(conj_p(:));
+  
+  gap = primal-dual;  
+  
 end

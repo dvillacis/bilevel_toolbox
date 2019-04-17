@@ -105,7 +105,6 @@ function [sol,gap] = solve_generic_l1_l2(lambda,alpha,Ks,Bs,z,q,gamma,xinit,para
   for k = 1:param.maxiter
 
     % Dual update
-    %y = y + sigma*Kbb*sol_;
     y = y + sigma*Kbb.val(sol_);
     y = calc_prox(y,z,q,Ks,Bs,lambda,alpha,sigma);
 
