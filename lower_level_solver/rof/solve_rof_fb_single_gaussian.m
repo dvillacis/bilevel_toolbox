@@ -27,14 +27,11 @@ function [sol,gap] = solve_rof_fb_single_gaussian(f,param)
 
 
   [M, N] = size(f);
-  f = f(:);
 
   % Generate gradient matrix for this image
-  gradient = FinDiffOperator([M,N],'fn');
-  nabla = gradient.matrix();
-  nablat = nabla';
+  op = FinDiffOperator([M,N],'fn');
 
-  p = zeros(M*N*2,1);
+  p = zeros(M,N,2);
   p_old = p;
 
   L = 8;
@@ -50,14 +47,18 @@ function [sol,gap] = solve_rof_fb_single_gaussian(f,param)
   for k = 1:param.maxiter
 
     p_old = p;
-    p = p - a*(nabla*(nablat*p - f));
-    p = reshape(p,M*N,2);
-    p = reshape(bsxfun(@rdivide,p,max(1, b*rssq(p,2))), M*N*2,1);
+    p = p - a * op.val(op.conj(p)-f);
+    p = bsxfun(@rdivide,p,max(1,b*rssq(p,3)));
+    
+    %p = p - a*(nabla*(nablat*p - f));
+    %p = reshape(p,M*N,2);
+    %p = reshape(bsxfun(@rdivide,p,max(1, b*rssq(p,2))), M*N*2,1);
+    
     grad = p_old-p;
     p = p_old - 1.9*grad;
 
-    sol = f - nablat*p;
-    [ga, ~, ~] = compute_rof_pd_gap(nabla, nablat, sol, p, f, param.alpha, M, N);
+    sol = f - op.conj(p);
+    [ga, ~, ~] = compute_rof_pd_gap(op.val(sol), sol, op.conj(p), f, param.alpha);
 
     gap = [gap, ga];
 
@@ -80,4 +81,14 @@ function [sol,gap] = solve_rof_fb_single_gaussian(f,param)
     fprintf(' Execution Time: %f \n\n', toc(t1));
   end
 
+end
+
+function [gap, primal, dual] = compute_rof_pd_gap(val_u, u, conj_p, f, alpha)
+
+  norm_val_u = rssq(val_u,3);
+  
+  primal = alpha * sum(norm_val_u(:)) + 0.5 * sumsqr(u(:)-f(:));
+  dual   = f(:)'*conj_p(:) - 0.5 * sumsqr(conj_p(:));
+  
+  gap = primal-dual;
 end

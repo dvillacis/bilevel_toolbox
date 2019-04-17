@@ -1,4 +1,4 @@
-classdef FinDiffOperator
+classdef FinDiffOperator < Operator
     %FINDIFFOPERATOR Finite Differences Operator
     %   Finite differences matrix operator
 
@@ -9,7 +9,7 @@ classdef FinDiffOperator
         UseOpt
         UseMex
         CVXVersion
-        Grad
+        %Grad
     end
 
     methods
@@ -36,10 +36,14 @@ classdef FinDiffOperator
             elseif obj.UseOpt && obj.Method(1)=='c' && obj.Method(2)=='n'
                 res = obj.Weight*ctrdiff(x);
             else
-                dualdim=[obj.Dim, 2];
-                %grad=obj.Weight*diff2d(obj.Dim, obj.Method);
-                res = obj.Weight*reshape(obj.Grad*x(:), dualdim);
-                %res = obj.Weight*reshape(grad*x(:), dualdim);
+                error("Will use unoptimized method- deprecated");
+%             elseif obj.UseOpt && obj.Method(1)=='c' && obj.Method(2)=='n'
+%                 res = obj.Weight*ctrdiff(x);
+%             else
+%                 dualdim=[obj.Dim, 2];
+%                 %grad=obj.Weight*diff2d(obj.Dim, obj.Method);
+%                 res = obj.Weight*reshape(obj.Grad*x(:), dualdim);
+%                 %res = obj.Weight*reshape(grad*x(:), dualdim);
             end
 
         end
@@ -55,9 +59,14 @@ classdef FinDiffOperator
             elseif obj.UseOpt && obj.Method(1)=='c' && obj.Method(2)=='n'
                 res = obj.Weight*ctrdiff_conj(y);
             else
-                %grad = obj.Weight*diff2d(obj.Dim, obj.Method);
-                res = obj.Weight*reshape(obj.Grad'*y(:), obj.Dim);
-                %res = obj.Weight*reshape(grad'*y(:), obj.Dim);
+                error("Will use unoptimized method- deprecated");
+%             elseif obj.UseOpt && obj.Method(1)=='c' && obj.Method(2)=='n'
+%                 res = obj.Weight*ctrdiff_conj(y);
+%             else
+%                 %grad = obj.Weight*diff2d(obj.Dim, obj.Method);
+%                 res = obj.Weight*reshape(obj.Grad'*y(:), obj.Dim);
+%                 %res = obj.Weight*reshape(grad'*y(:), obj.Dim);
+%             end
             end
         end
 
