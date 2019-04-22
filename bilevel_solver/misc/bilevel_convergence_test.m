@@ -28,7 +28,7 @@ function [stop, crit, s, iter, info] = bilevel_convergence_test(sol, s, iter, lo
         stop = 1;
       end
     case 'radius_threshold'
-      if s.radius < param.tol || norm(s.grad) < param.tol
+      if s.radius < param.tol || norm(s.grad(:)) < param.tol
         crit = 'RADIUS_THRESHOLD';
         stop = 1;
       end

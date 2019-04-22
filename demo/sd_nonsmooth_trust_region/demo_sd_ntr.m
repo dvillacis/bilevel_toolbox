@@ -26,12 +26,23 @@ bilevel_param.verbose = 2;
 bilevel_param.maxit = 400;
 bilevel_param.tol = 1e-3;
 bilevel_param.algo = 'NONSMOOTH_TRUST_REGION';
-bilevel_param.radius = 2000.0;
+bilevel_param.radius = 50.0;
 bilevel_param.minradius = 1.0;
 bilevel_param.gamma1 = 0.5;
 bilevel_param.gamma2 = 1.5;
 bilevel_param.eta1 = 0.10;
 bilevel_param.eta2 = 0.80;
 %lambda = 80.0*triu(ones(M,N))+0.9*tril(ones(M,N)); % Initial guess
-lambda = 50*rand(M,N);
+lambda = 40*rand(M,N);
 [sol,info] = solve_bilevel(lambda,lower_level_problem,upper_level_problem,bilevel_param);
+
+%% Plot
+figure(1)
+[a,b] = meshgrid(1:M,1:N);
+surf(a,b,sol);
+
+figure(2)
+imagesc_gray(info.u_history(:,:,end));
+
+figure(3)
+imagesc_gray(info.sol_history(:,:,end));

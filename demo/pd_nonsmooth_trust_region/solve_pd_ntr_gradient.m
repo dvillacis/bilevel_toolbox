@@ -3,7 +3,9 @@ function [grad] = solve_pd_ntr_gradient(u,lambda,dataset,params)
     noisy = dataset.get_corrupt(1);
 
     [M,N] = size(noisy);
-    lambda_out = patch_operator(lambda,M);
+    po = PatchOperator(size(lambda),[M,N]);
+    
+    lambda_out = po.val(lambda);
     nabla = gradient_matrix(M,N);
     A = spdiags(lambda_out(:),0,M*N,M*N); % Build diagonal matrix with parameters to estimate
     B = nabla';
@@ -73,13 +75,13 @@ function [grad] = solve_pd_ntr_gradient(u,lambda,dataset,params)
 
         % Adjoint state is solution of the linear system
 
-        adj=(A+B*hess22)\(u(:)-original(:));
+        adj=(A+B*hess22)\(original(:)-u(:));
 
     end
 
     % Calculating the gradient
     beta = 0.1;
-    grad = (noisy-u).*reshape(adj,M,N) + beta*lambda_out;
+    grad = po.conj((noisy-u).*reshape(adj,M,N)) + beta * lambda;
 end
 
 function nXi = xi(p,m,n)
@@ -97,3 +99,5 @@ function prod = outer_product(p,q,m,n)
   d = p(:,2).*q(:,2);
   prod = [spdiags(a,0,m*n,m*n) spdiags(b,0,m*n,m*n); spdiags(c,0,m*n,m*n) spdiags(d,0,m*n,m*n)];
 end
+
+

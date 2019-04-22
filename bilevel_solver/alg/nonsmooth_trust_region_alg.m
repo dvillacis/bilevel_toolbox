@@ -69,7 +69,7 @@ function [sol,s] = nonsmooth_trust_region_algorithm(lower_level_problem,upper_le
         rho = ared/pred;
 
         if size(sol,1)>1 || size(sol,2)>1
-            fprintf('l2_cost = %f, norm_sol = %f, norm_grad = %f, radius = %f, rho = %f, norm_step = %f\n',cost,norm(sol),norm(s.grad),s.radius,rho,norm(step));
+            fprintf('l2_cost = %f, norm_sol = %f, norm_grad = %f, radius = %f, rho = %f, norm_step = %f\n',cost,norm(sol(:)),norm(s.grad(:)),s.radius,rho,norm(step(:)));
         else
             fprintf('l2_cost = %f, sol = %f, grad = %f, radius = %f, rho = %f\n',cost,sol,s.grad,s.radius,rho);
         end
