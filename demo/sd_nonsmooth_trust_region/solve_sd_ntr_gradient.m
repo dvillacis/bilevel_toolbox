@@ -78,7 +78,7 @@ function [grad] = solve_sd_ntr_gradient(u,lambda,dataset,params)
 
     % Calculating the gradient
     beta = 0.1;
-    grad = (noisy-u).*reshape(adj,M,N);% + beta*lambda;
+    grad = (noisy-u).*reshape(adj,M,N) + beta*lambda;
 end
 
 function nXi = xi(p,m,n)
