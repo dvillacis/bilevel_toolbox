@@ -1,7 +1,7 @@
-function [y] = solve_sd_ntr_lower_level(lambda,noisy)
+function [y] = solve_regularized_bfgs_lower_level(lambda,noisy)
     %% Solving the Lower Level Problem
     param_solver.verbose = 0;
-    param_solver.maxiter = 5000;
+    param_solver.maxiter = 2000;
     param_solver.tol = 1e-3;
 
     %% Define the cell matrices

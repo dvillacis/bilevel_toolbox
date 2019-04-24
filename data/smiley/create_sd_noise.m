@@ -8,9 +8,9 @@ smiley = 1-imbinarize(smiley,1e-4);
 black_pixels = smiley == 1;
 % Adding gaussian noise std 0.1 to black pixels
 noise1 = 0.1*rand(m,0.5*n);
-noise2 = 0.6*rand(m,0.5*n);
+noise2 = 0.5*rand(m,0.5*n);
 noise = horzcat(noise1,noise2);
-noise(black_pixels) = 0;
+%noise(black_pixels) = 0;
 smiley_noisy = smiley + noise;
     
 %show image
@@ -20,5 +20,5 @@ figure(2)
 imagesc_gray(smiley_noisy);
 
 % write image
-imwrite(smiley,'data/smiley/1_smiley_original.png');
-imwrite(smiley_noisy,'data/smiley/1_smiley_noisy.png');
+imwrite(smiley,'data/smiley/2_smiley_original.png');
+imwrite(smiley_noisy,'data/smiley/2_smiley_noisy.png');

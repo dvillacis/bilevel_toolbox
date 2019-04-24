@@ -8,6 +8,8 @@ function [grad] = solve_sd_ntr_gradient(u,lambda,dataset,params)
     B = nabla';
     Ku = nabla*u(:); %Discrete gradient matrix
     nKu = xi(Ku,M,N); %Discrete euclidean norm
+    
+    beta = 0.1;
 
     if params.complex_model == false
         % Get partition active-inactive
@@ -28,19 +30,22 @@ function [grad] = solve_sd_ntr_gradient(u,lambda,dataset,params)
         Track = [u(:)-original(:);sparse(2*M*N,1)];
         mult = Adj\Track;
         adj = mult(1:N*M);
+        
     else
-        % Get Active, Strongly Active and Inactive - gamma sets
+        
+        % Active, weak active and inactive sets \xi(\nabla^h y)>=1.
         gamma = 100;
-        act1 = gamma*nKu-1;
+        act1=gamma*nKu-1;
         act=spones(max(0,act1(1:M*N)-1/(2*gamma)));
         Act=spdiags(act,0,M*N,M*N);
         inact=spones(min(0,act1(1:M*N)+1/(2*gamma)));
+        Inact=spdiags(inact,0,M*N,M*N);
         sact=sparse(1-act-inact);
         Sact=spdiags(sact,0,M*N,M*N);
 
         % Diagonal matrix corresponding to regularization function
         den=(Act+Sact)*nKu(1:M*N)+inact;
-        mk=(act+Sact*(1-gamma/2*(1-gamma*nKu(1:M*N)+1/(2*gamma)).^2))./den;
+        mk=(act+Sact*(1-gamma/2*(1-gamma*nKu(1:M*N)+1/(2*gamma))).^2)./den;
         Dmi=spdiags(kron(ones(2,1),mk+gamma*inact),0,2*M*N,2*M*N);
 
         % Negative term in the derivative
@@ -52,14 +57,14 @@ function [grad] = solve_sd_ntr_gradient(u,lambda,dataset,params)
         % equation in the optimality system
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-        % Matrix of product (Ku)*(Ku)^T for the Newton step divided by
+        % Matrix of product (Gy)*(Gy)^T for the Newton step divided by
         % the Frobenius norm to the cube
 
-        H4=outer_product(Ku./kron(ones(2,1),den.^2),Ku,M,N);
+        H4=prodesc(Ku./kron(ones(2,1),den.^2),Ku);
 
         % Matrix of product (Gy)*(Gy)^T for the Newton step
 
-        prodKuKu=outer_product(Ku,Ku,M,N);
+        prodKuKu=prodesc(Ku,Ku);
 
         sk2=(Sact*gamma^2*(1-gamma*nKu(1:M*N)+1/(2*gamma)))./(den.^2);
         sk2=spdiags(kron(ones(2,1),sk2),0,2*M*N,2*M*N);
@@ -72,12 +77,11 @@ function [grad] = solve_sd_ntr_gradient(u,lambda,dataset,params)
 
         % Adjoint state is solution of the linear system
 
-        adj=(A+B*hess22)\(u(:)-original(:));
+        adj=((B*hess22)'+A')\(u(:)-original(:));
 
     end
 
     % Calculating the gradient
-    beta = 0.1;
     grad = (noisy-u).*reshape(adj,M,N) + beta*lambda;
 end
 
@@ -95,4 +99,26 @@ function prod = outer_product(p,q,m,n)
   c = p(:,2).*q(:,1);
   d = p(:,2).*q(:,2);
   prod = [spdiags(a,0,m*n,m*n) spdiags(b,0,m*n,m*n); spdiags(c,0,m*n,m*n) spdiags(d,0,m*n,m*n)];
+end
+
+%Matriz con el producto q*p^T para el paso de Newton
+function P=prodesc(q,p,N)
+    if nargin<3
+        N=2;
+    end
+    
+    n=size(q,1)/N;
+
+    P=sparse(N*n, N*n);
+
+    for j=1:N
+        qidx=1+(j-1)*n:j*n;
+        qj=q(qidx, 1);
+        for i=1:N
+            pidx=1+(i-1)*n:i*n;
+            pi=p(pidx, 1);
+            
+            P(qidx, pidx)=spdiags(pi.*qj, 0, n, n);
+        end
+    end
 end

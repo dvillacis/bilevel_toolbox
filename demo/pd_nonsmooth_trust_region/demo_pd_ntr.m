@@ -11,10 +11,10 @@ dataset = DatasetInFolder('data/smiley','*_smiley_original.png','*_smiley_noisy.
 %% Load input image
 % original = dataset.get_target(1);
 % noisy = dataset.get_corrupt(1);
-[M,N]=size(dataset.get_target(1));
+[M,N]=size(dataset.get_target(2));
 
 % Define lower level problem
-lower_level_problem.solve = @(lambda,dataset) solve_pd_ntr_lower_level(lambda,dataset.get_corrupt(1));
+lower_level_problem.solve = @(lambda,dataset) solve_pd_ntr_lower_level(lambda,dataset.get_corrupt(2));
 
 % Define upper level problem
 upper_level_problem.eval = @(u,lambda,dataset) eval_pd_ntr_upper_level(u,lambda,dataset);
@@ -26,14 +26,14 @@ bilevel_param.verbose = 2;
 bilevel_param.maxit = 300;
 bilevel_param.tol = 1e-4;
 bilevel_param.algo = 'NONSMOOTH_TRUST_REGION';
-bilevel_param.radius = 200.0;
-bilevel_param.minradius = 0.1;
+bilevel_param.radius = 300.0;
+bilevel_param.minradius = 1.0;
 bilevel_param.gamma1 = 0.5;
 bilevel_param.gamma2 = 1.5;
 bilevel_param.eta1 = 0.10;
 bilevel_param.eta2 = 0.80;
 %lambda = 80.0*triu(ones(M,N))+0.9*tril(ones(M,N)); % Initial guess
-lambda = 50*rand(64,64);
+lambda = 100*rand(16,16);
 [sol,info] = solve_bilevel(lambda,lower_level_problem,upper_level_problem,bilevel_param);
 po = PatchOperator(size(sol),[M,N]);
 
