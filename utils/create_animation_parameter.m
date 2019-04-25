@@ -1,13 +1,16 @@
-function [] = create_animation_parameter(input_tensor,pathname)
+function [] = create_animation_parameter(input_tensor,pathname,op)
 %CREATE_ANIMATION Create a GIF animation out of a tensor
 %   Detailed explanation goes here
 h = figure;
 axis tight manual
 filename = pathname;
-[Msol,Nsol,NumSol] = size(input_tensor);
+sol_1 = op.val(input_tensor(:,:,1));
+[~,~,NumSol] = size(input_tensor);
+[Msol,Nsol] = size(sol_1);
 [a,b] = meshgrid(1:Msol,1:Nsol);
 for i = 1:NumSol
-    surf(a,b,input_tensor(:,:,i));
+    sol_i = op.val(input_tensor(:,:,i));
+    surf(a,b,sol_i);
     drawnow;
     % Capture the plot as an image 
     frame = getframe(h); 
