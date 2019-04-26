@@ -24,7 +24,7 @@ upper_level_problem.dataset = dataset;
 %% Solving the bilevel problem
 bilevel_param.verbose = 2;
 bilevel_param.maxit = 400;
-bilevel_param.tol = 1e-4;
+bilevel_param.tol = 1e-2;
 bilevel_param.algo = 'NONSMOOTH_TRUST_REGION';
 bilevel_param.radius = 400.0;
 bilevel_param.minradius = 100.0;
@@ -32,8 +32,9 @@ bilevel_param.gamma1 = 0.5;
 bilevel_param.gamma2 = 1.5;
 bilevel_param.eta1 = 0.10;
 bilevel_param.eta2 = 0.80;
+bilevel_param.use_bfgs = true;
 %lambda = 80.0*triu(ones(M,N))+0.9*tril(ones(M,N)); % Initial guess
-lambda = 100*ones(M,N);
+lambda = 10*ones(M,N);
 [sol,info] = solve_bilevel(lambda,lower_level_problem,upper_level_problem,bilevel_param);
 
 %% Plot
