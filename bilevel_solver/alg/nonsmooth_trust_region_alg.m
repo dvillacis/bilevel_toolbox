@@ -2,7 +2,7 @@ function s = nonsmooth_trust_region_alg()
     s.name = 'NONSMOOTH_TRUST_REGION';
     s.initialize = @(x_0, lower_level_problem, upper_level_problem, param) nonsmooth_trust_region_initialize(x_0,lower_level_problem,upper_level_problem,param);
     s.algorithm = @(x_0,lower_level_problem,upper_level_problem,sol,s,param) nonsmooth_trust_region_algorithm(lower_level_problem,upper_level_problem,sol,s,param);
-    s.finalize = @(x_0,lower_level_problem,upper_level_problem,sol,s,param) sol;
+    s.finalize = @(info) nonsmooth_trust_region_finalize(info);
 end
 
 function [sol,state,param] = nonsmooth_trust_region_initialize(x_0,lower_level_problem,upper_level_problem,param)
@@ -121,6 +121,10 @@ function [sol,state] = nonsmooth_trust_region_algorithm(lower_level_problem,uppe
       %sol = sol + step;
       state.radius = param.gamma1*state.radius;
     end
+end
+
+function nonsmooth_trust_region_finalize(info)
+    fprintf('(*) Regularized Model Evaluation\n');
 end
 
 function step = tr_subproblem(grad,bfgs,radius)

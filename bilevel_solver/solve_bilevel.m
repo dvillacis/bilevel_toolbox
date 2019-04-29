@@ -91,8 +91,6 @@ function [sol,info] = solve_bilevel(x_0, lower_level_problem, upper_level_proble
 
     end
 
-    sol = algo.finalize(x_0,lower_level_problem,upper_level_problem,sol,s,param);
-
     info.algo = algo.name;
     info.iter = iter;
     info.crit = crit;
@@ -100,6 +98,8 @@ function [sol,info] = solve_bilevel(x_0, lower_level_problem, upper_level_proble
     info.l2_cost_history = s.l2_cost_history;
     info.sol_history = s.sol_history;
     info.u_history = s.u_history;
+    
+    algo.finalize(info);
 
     % Print summary
     if param.verbose>0
