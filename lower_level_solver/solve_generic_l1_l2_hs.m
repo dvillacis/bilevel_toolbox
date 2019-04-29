@@ -249,13 +249,6 @@ function [sol,vals] = solve_generic_l1_l2_hs(lambda,alpha,Ks,Bs,z,q,gamma,yinit,
     sol=reshape(y, [n, m]);
 end
 
-% Calculate the pointwise euclidean norm
-function ngrepl=pointwise_norm_replicated(g, n, m)
-    gg=reshape(g, [n, m, 2]);
-    ng=sqrt(sum(gg.^2, 3));
-    ngrepl=reshape(cat(3, ng, ng), size(g));
-end
-
 function val=calc_val(lambda,alpha,Ks,Bs,z,q,gamma,y,param);
     val=0;
     for j=1:length(Ks)
