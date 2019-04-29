@@ -11,6 +11,10 @@ function [sol,gap] = solve_generic_l1_l2(lambda,alpha,Ks,Bs,z,q,gamma,xinit,para
 %   q: l1 data
 %   gamma: Huber regularization parameter for l1 terms
 %   param: struct with the algorithm specific parameters
+%     .maxiter (integer, default: 5000): maximum iteration count
+%     .check (integer, default: 100): verbose printing interval
+%     .verbose (integer, default: true): verbose flag
+%     .tol (integer, default: 1e-3): pd gap stopping criteria
 % OUTPUTS
 %   sol: minimizer for the optimization problem
 %   gap: primal-dual gap values per iteration
@@ -22,24 +26,16 @@ function [sol,gap] = solve_generic_l1_l2(lambda,alpha,Ks,Bs,z,q,gamma,xinit,para
   t1 = tic;
 
   % Test maxiter parameter
-  if ~isfield(param,'maxiter')
-    param.maxiter = 5000;
-  end
+  param = add_default(param, 'maxiter', 5000);
 
   % Test check parameter
-  if ~isfield(param,'check')
-    param.check = 100;
-  end
+  param = add_default(param, 'check', 100);
 
   % Test verbose parameter
-  if ~isfield(param,'verbose')
-    param.verbose = 1;
-  end
+  param = add_default(param, 'verbose', true);
 
   % Test tol parameter
-  if ~isfield(param,'tol')
-    param.tol = 1e-3;
-  end
+  param = add_default(param, 'tol', 1e-3);
 
   % Test for cell input Ks
   if ~iscell(Ks)
