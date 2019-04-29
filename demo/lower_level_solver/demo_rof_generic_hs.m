@@ -19,6 +19,7 @@ q = zeros(M,N,2);
 
 alpha = 1;
 lambda = 4.5;
+gamma = 1000;
 
 %% Solving
-[denoised,gap] = solve_generic_l1_l2({lambda},{alpha},{id_op},{grad_op},noisy,q,0,0*noisy,param);
+[denoised,gap] = solve_generic_l1_l2_hs({lambda},{alpha},{id_op},{grad_op},{noisy},{q},{gamma},0*noisy,param);

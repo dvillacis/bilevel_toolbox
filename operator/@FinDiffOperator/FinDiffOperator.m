@@ -70,11 +70,11 @@ classdef FinDiffOperator < Operator
             end
         end
 
-%         function grad = matrix(obj)
-%             %MATRIX Return a matrix representation of the operator
-%             %   Detailed explanation goes here
-%             grad = diff2d(obj.Dim,obj.Method);
-%         end
+        function grad = matrix(obj)
+            %MATRIX Return a matrix representation of the operator
+            %   Detailed explanation goes here
+            grad = diff2d(obj.Dim,obj.Method);
+        end
 
         function bnd = bound(obj)
             %bnd = norm(obj.matrix());
