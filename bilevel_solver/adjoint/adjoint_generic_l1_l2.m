@@ -21,10 +21,7 @@
 %   eta - adjoint state
 function [p, glambda, galpha]=adjoint_gen(Ks,Bs,lambda,alpha,gamma,f,z,FIDSOL,REGSOL,eta)
     n=size(y, 1);
-    m=n;
-
-    % Only square images supported at the moment
-    assert(m==n);
+    m=size(y, 2;
 
     g=1;
 
@@ -132,18 +129,18 @@ end
 
 %Matriz con el producto q*p^T para el paso de Newton
 function P=prodesc(q,p,N)
-    n=size(q,1)/N;
+    sz=size(q,1)/N;
 
     P=sparse(size(q, 1), size(q, 1));
 
     for j=1:N
-        qidx=1+(j-1)*n:j*n;
+        qidx=1+(j-1)*sz:j*sz;
         qj=q(qidx, 1);
         for i=1:N
-            pidx=1+(i-1)*n:i*n;
-            pi=p(pidx, 1);
+            pidx=1+(i-1)*sz:i*sz;
+            pidx2=p(pidx, 1);
 
-            P(qidx, pidx)=spdiags(pi.*qj, 0, n, n);
+            P(qidx, pidx)=spdiags(pidx2.*qj, 0, sz, sz);
         end
     end
 end

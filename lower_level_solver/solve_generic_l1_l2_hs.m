@@ -43,11 +43,8 @@ function [sol,vals] = solve_generic_l1_l2_hs(lambda,alpha,Ks,Bs,z,q,gamma,yinit,
         assert(isempty(q{j}) || norm(q{j}(:))==0);
     end
 
-    % Only square images supported
-    assert(size(yinit, 1)==size(yinit, 2));
-
     n=size(yinit, 1);
-    m=n;
+    m=size(yinit, 2);
 
     y=yinit(:);
     itercount=0;
