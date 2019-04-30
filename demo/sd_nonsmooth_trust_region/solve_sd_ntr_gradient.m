@@ -11,7 +11,7 @@ function [grad] = solve_sd_ntr_gradient(u,lambda,dataset,params)
     
     beta = 0.1;
 
-    if params.complex_model == false
+    if params.regularized_model == false
         % Get partition active-inactive
         act = (nKu<1e-7); %TODO: Specify a partition of the possible biactive set
         inact = 1-act;

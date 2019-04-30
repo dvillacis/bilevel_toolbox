@@ -12,7 +12,7 @@ function [grad] = solve_pd_ntr_gradient(u,lambda,dataset,params)
     Ku = nabla*u(:); %Discrete gradient matrix
     nKu = xi(Ku,M,N); %Discrete euclidean norm
 
-    if params.complex_model == false
+    if params.regularized_model == false
         % Get partition active-inactive
         act = (nKu<1e-7); %TODO: Specify a partition of the possible biactive set
         inact = 1-act;

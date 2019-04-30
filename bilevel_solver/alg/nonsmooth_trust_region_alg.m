@@ -1,3 +1,29 @@
+% NONSMOOTH_TRUST_REGION_ALG Trust-Region Algorithm for nonconvex-nonsmooth
+% functions
+% This solver receives an abstract lower and upper level problem descriptions 
+% of a Bilevel problem and finds a Clarke stationary point by means of 
+% a two stages trust-region model; see
+%
+%   De los Reyes, Villacis, Bilevel Parameter Learning for Image Denoising,
+%   https://arxiv.org/abs/XXXX,
+%
+% INPUTS
+%   x_0: Initial parameter
+%   lower_level_problem: Lower Level Problem struct instance
+%   upper_level_problem: Upper Leveñ Problem struct instance
+%   param: struct with the algorithm specific parameters
+%     .minradius (real, default: 1e-4): model switching radius
+%     .use_bfgs (boolean, default: false): use a second order model using
+%                                           bfgs approximation
+%     .use_lbfgs (boolean, default: false): use a second order model using
+%                                           a limited memory bfgs
+%     .no_bfgs (boolean, default: true): use a linear model
+%
+% OUTPUTS
+%   sol: current state of the parameter solution
+%   info: algorithm run information
+
+
 function s = nonsmooth_trust_region_alg()
     s.name = 'NONSMOOTH_TRUST_REGION';
     s.initialize = @(x_0, lower_level_problem, upper_level_problem, param) nonsmooth_trust_region_initialize(x_0,lower_level_problem,upper_level_problem,param);
@@ -15,19 +41,18 @@ function [sol,state,param] = nonsmooth_trust_region_initialize(x_0,lower_level_p
     state.u_history = lower_level_problem.solve(x_0,upper_level_problem.dataset);
 
     % Test if the min radius is defined
-    if ~isfield(param,'minradius')
-    param.minradius = 1e-4;
-    end
+    param = add_default(param,'minradius',1e-4);
 
-    % Test if the min radius is defined
-    if ~isfield(param,'use_bfgs')
-    param.use_bfgs = true;
-    end
-
-    if param.use_bfgs == 1
-      state.bfgs = speye(size(x_0(:),1));
+    % Test if using second order solver, and setting accordingly
+    param = add_default(param,'use_bfgs',false);
+    param = add_default(param,'use_lbfgs',false);
+    param = add_default(param,'no_bfgs',true);
+    
+    % Setting the hessian initialization accordingly
+    if param.use_bfgs == true || param.use_lbfgs == true
+        state.bfgs = speye(size(x_0(:),1));
     else
-      state.bfgs = zeros(size(x_0(:),1));
+      state.bfgs = zeros(size(x_0(:),1)); % Use first order model
     end
 
 end
@@ -36,7 +61,6 @@ function [sol,state] = nonsmooth_trust_region_algorithm(lower_level_problem,uppe
 
     % Solving the state equation (lower level solver)
     u = lower_level_problem.solve(sol,upper_level_problem.dataset);
-    %s.u_history = cat(3,s.u_history,u);
 
     % Getting current cost
     cost = upper_level_problem.eval(u,sol,upper_level_problem.dataset);
@@ -50,33 +74,19 @@ function [sol,state] = nonsmooth_trust_region_algorithm(lower_level_problem,uppe
 
     if state.radius >= param.minradius
 
-        % Solving the gradient
-        gradient_parameters.complex_model = false;
+        % Solving the Bouligand subdifferential element
+        gradient_parameters.regularized_model = false;
         state.grad = upper_level_problem.gradient(u,sol,upper_level_problem.dataset,gradient_parameters);       
 
     else
 
-        % Solving the gradient
-        gradient_parameters.complex_model = true;
+        % Solving the regularized gradient
+        gradient_parameters.regularized_model = true;
         state.grad = upper_level_problem.gradient(u,sol,upper_level_problem.dataset,gradient_parameters);
 
     end
-    
-    % Hessian Matrix approximation
-    if param.use_bfgs && isfield(state,'solprev')
-        if norm(sol-state.solprev)>1e-7
-            dsol = sol(:) - state.solprev(:);
-            t = state.bfgs*dsol;
-            r = state.grad(:)-state.gradprev(:);
-            if (dsol(:)'*r(:)) < 0
-                fprintf(2, '<<NEGATIVE CURVATURE - Skipping BFGS update>>')
-            else
-                state.bfgs=state.bfgs-1/(dsol'*t)*kron(t',t)+1/(dsol'*r)*kron(r',r);
-            end
-        end
-    end
 
-    step = tr_subproblem(state.grad(:),state.bfgs,state.radius);
+    step = tr_subproblem(sol,state,param);
     step = reshape(step,size(state.grad));
     %step = tr_generalized_cauchy(sol,state.grad,state.bfgs,state.radius,cost,param.use_bfgs);
     
@@ -99,7 +109,7 @@ function [sol,state] = nonsmooth_trust_region_algorithm(lower_level_problem,uppe
         fprintf('l2_cost = %f, sol = %f, grad = %f, radius = %f, rho = %f, step = %f',cost,sol,state.grad,state.radius,rho,step);
     end
     
-    if gradient_parameters.complex_model == 1
+    if gradient_parameters.regularized_model == 1
         fprintf(' * \n');
     else
         fprintf('\n');
@@ -127,20 +137,54 @@ function nonsmooth_trust_region_finalize(info)
     fprintf('(*) Regularized Model Evaluation\n');
 end
 
-function step = tr_subproblem(grad,bfgs,radius)
+function step = tr_subproblem(sol,state,param)
     % Step calculation
-    sn = -bfgs\grad;
-    predn = -grad'*sn-0.5*sn'*bfgs*sn;
-    if grad'*bfgs*grad <= 0
-        t = radius/norm(grad);
+    %sn = -bfgs\grad; %TODO: Replace for limited memory BFGS
+    %sn = get_Hg_lbgfs(grad,S,Y,hdiag);
+    if isfield(state,'solprev')
+        if param.use_bfgs == true
+            if norm(sol-state.solprev)>1e-7
+                dsol = sol(:) - state.solprev(:);
+                t = state.bfgs*dsol;
+                r = state.grad(:)-state.gradprev(:);
+                if (dsol(:)'*r(:)) < 0
+                    fprintf(2, '<<NEGATIVE CURVATURE - Skipping BFGS update>>')
+                else
+                    state.bfgs=state.bfgs-1/(dsol'*t)*kron(t',t)+1/(dsol'*r)*kron(r',r);
+                end
+            end
+            sn = -state.bfgs\state.grad(:);
+            predn = -state.grad(:)'*sn-0.5*sn'*state.bfgs*sn;
+            if state.grad(:)'*state.bfgs*state.grad(:) <= 0 % Check curvature to see if optimizer is in the boundary or within
+                t = radius/norm(state.grad(:));
+            else
+                t = min(norm(state.grad(:)).^2/(state.grad(:)'*state.bfgs*state.grad(:)),state.radius/(norm(state.grad(:))));
+            end
+            sc = -t*state.grad(:);
+            predc = -state.grad(:)'*sc-0.5*sc'*state.bfgs*sc;
+        elseif param.use_lbfgs == true
+            %TODO implement limited memory bfgs
+            error('Not yet implemented');
+        else
+            % Otherwise, use a linear model
+            sn = -state.grad(:);
+            predn = -state.grad(:)'*sn;
+            t = state.radius/norm(state.grad(:));
+            sc = -t*state.grad(:);
+            predc = -state.grad(:)'*sc;
+            
+        end
     else
-        t = min(norm(grad).^2/(grad'*bfgs*grad),radius/(norm(grad)));
+        % Otherwise, use a linear model
+        sn = -state.grad(:);
+        predn = -state.grad(:)'*sn;
+        t = state.radius/norm(state.grad(:));
+        sc = -t*state.grad(:);
+        predc = -state.grad(:)'*sc;
     end
-    sc = -t*grad;
-    predc = -grad'*sc-0.5*sc'*bfgs*sc;
 
     % Step Selection
-    if norm(sn)<=radius && predn >= 0.8*predc
+    if norm(sn)<=state.radius && predn >= 0.8*predc
         step = sn;
     else
         step = sc;
@@ -224,4 +268,19 @@ function [xi,step] = tr_subproblem_complex(grad,hess,radius)
     [x,fval] = fmincon(obj,[0;0],A,b,[],[],[],[],nonloc,options);
     xi = x(1);
     step = x(2:end);
+end
+
+function get_Hg_lbgfs(grad, S, Y, hdiag)
+% This function returns the approximate inverse Hessian multiplied by the gradient, H*g
+% Input
+%   S:    Memory matrix (n by k) , s{i}=x{i+1}-x{i}
+%   Y:    Memory matrix (n by k) , df{i}=df{i+1}-df{i}
+%   g:    gradient (n by 1)
+%   hdiag value of initial Hessian diagonal elements (scalar)
+% Output
+%   Hg    the the approximate inverse Hessian multiplied by the gradient g
+% Reference
+%   Nocedal, J. (1980). "Updating Quasi-Newton Matrices with Limited Storage".
+%   Wiki http://en.wikipedia.org/wiki/Limited-memory_BFGS
+%   two loop recursion
 end
