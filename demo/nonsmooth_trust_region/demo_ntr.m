@@ -23,7 +23,7 @@ bilevel_param.gamma1 = 0.5;
 bilevel_param.gamma2 = 1.5;
 bilevel_param.eta1 = 0.10;
 bilevel_param.eta2 = 0.80;
-%bilevel_param.use_lbfgs = true;
+bilevel_param.use_bfgs = true;
 lambda = 15;
 [optimal_parameter,info] = solve_bilevel(lambda,lower_level_problem,upper_level_problem,bilevel_param);
 

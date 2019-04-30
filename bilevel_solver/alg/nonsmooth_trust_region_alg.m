@@ -50,7 +50,7 @@ function [sol,state,param] = nonsmooth_trust_region_initialize(x_0,lower_level_p
     
     % Setting the hessian initialization accordingly
     if param.use_bfgs == true || param.use_lbfgs == true
-        state.bfgs = speye(size(x_0(:),1));
+        state.bfgs = 0.001*speye(size(x_0(:),1));
     else
       state.bfgs = zeros(size(x_0(:),1)); % Use first order model
     end
@@ -86,7 +86,7 @@ function [sol,state] = nonsmooth_trust_region_algorithm(lower_level_problem,uppe
 
     end
 
-    step = tr_subproblem(sol,state,param);
+    [step,state] = tr_subproblem(sol,state,param);
     step = reshape(step,size(state.grad));
     %step = tr_generalized_cauchy(sol,state.grad,state.bfgs,state.radius,cost,param.use_bfgs);
     
@@ -95,7 +95,7 @@ function [sol,state] = nonsmooth_trust_region_algorithm(lower_level_problem,uppe
     state.gradprev = state.grad;
     
     % Trust Region Modification
-    pred = -state.grad(:)'*step(:) - 0.5*step(:)'*state.bfgs*step(:);
+    pred = -state.grad(:)'*step(:) - 0.5*step(:)'*state.bfgs*step(:); % TODO: Fix for limited memory bfgs
     next_u = lower_level_problem.solve(sol+step,upper_level_problem.dataset);
     next_cost = upper_level_problem.eval(next_u,sol+step,upper_level_problem.dataset);
     ared = cost-next_cost;
@@ -137,7 +137,7 @@ function nonsmooth_trust_region_finalize(info)
     fprintf('(*) Regularized Model Evaluation\n');
 end
 
-function step = tr_subproblem(sol,state,param)
+function [step,state] = tr_subproblem(sol,state,param)
     % Step calculation
     %sn = -bfgs\grad; %TODO: Replace for limited memory BFGS
     %sn = get_Hg_lbgfs(grad,S,Y,hdiag);

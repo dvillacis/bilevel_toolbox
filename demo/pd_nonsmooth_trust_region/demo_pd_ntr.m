@@ -27,13 +27,14 @@ bilevel_param.maxit = 300;
 bilevel_param.tol = 1e-4;
 bilevel_param.algo = 'NONSMOOTH_TRUST_REGION';
 bilevel_param.radius = 500.0;
-bilevel_param.minradius = 100.0;
+bilevel_param.minradius = 10.0;
 bilevel_param.gamma1 = 0.5;
 bilevel_param.gamma2 = 1.5;
 bilevel_param.eta1 = 0.10;
-bilevel_param.eta2 = 0.80;
+bilevel_param.eta2 = 0.60;
+bilevel_param.use_bfgs = true;
 %lambda = 80.0*triu(ones(M,N))+0.9*tril(ones(M,N)); % Initial guess
-lambda = 100*ones(16,16);
+lambda = 100*ones(32,32);
 [sol,info] = solve_bilevel(lambda,lower_level_problem,upper_level_problem,bilevel_param);
 po = PatchOperator(size(sol),[M,N]);
 
@@ -49,7 +50,7 @@ figure(3)
 imagesc_gray(po.val(info.sol_history(:,:,end)));
 
 %% Save animations
-create_animation_image(info.u_history,'/Users/dvillacis/Desktop/smiley_pd_evolution2.gif');
-create_animation_parameter(info.sol_history,'/Users/dvillacis/Desktop/smiley_pd_param_evolution2.gif',po);
+%create_animation_image(info.u_history,'/Users/dvillacis/Desktop/smiley_pd_evolution2.gif');
+%create_animation_parameter(info.sol_history,'/Users/dvillacis/Desktop/smiley_pd_param_evolution2.gif',po);
 
 
