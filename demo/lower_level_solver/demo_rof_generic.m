@@ -2,7 +2,7 @@ clear all;
 clc;
 
 %% Load dataset
-dataset = DatasetInFolder('data/circle_dataset_single_gaussian','*_circle_original.png','*_circle_noisy.png');
+dataset = DatasetInFolder('data/circle_dataset','*_circle_original.png','*_circle_noisy.png');
 
 %% Load image
 noisy = dataset.get_corrupt(1);
@@ -22,3 +22,7 @@ lambda = 4.5;
 
 %% Solving
 [denoised,gap] = solve_generic_l1_l2({lambda},{alpha},{id_op},{grad_op},noisy,{q},0,0*noisy,param);
+
+%% Plotting
+figure
+imagesc_gray(denoised);

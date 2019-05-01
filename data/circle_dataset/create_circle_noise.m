@@ -2,23 +2,22 @@ clear all;
 close all;
 clc;
 
-smiley = im2double(imread('data/smiley/smiley.png'));
-smiley = 1-imbinarize(smiley,1e-4);
-[m,n] = size(smiley);
-black_pixels = smiley == 1;
+circle = imread('data/circle_dataset/circle.png');
+[m,n] = size(circle);
+
 % Adding gaussian noise std 0.1 to black pixels
-noise1 = 0.1*rand(m,0.5*n);
-noise2 = 0.5*rand(m,0.5*n);
-noise = horzcat(noise1,noise2);
-%noise(black_pixels) = 0;
-smiley_noisy = smiley + noise;
+%circle_noisy = imnoise(circle,'salt & pepper',0.2);
+circle_noisy = imnoise(circle,'gaussian');
+% circle_noisy = circle;
+% circle_noisy(:,1:n/2) = imnoise(circle(:,1:n/2),'gaussian',0.1);
+% circle_noisy(:,n/2:n) = imnoise(circle(:,n/2:n),'salt & pepper',0.2);
     
 %show image
 figure(1)
-imagesc_gray(smiley);
+imagesc_gray(circle);
 figure(2)
-imagesc_gray(smiley_noisy);
+imagesc_gray(circle_noisy);
 
 % write image
-imwrite(smiley,'data/smiley/2_smiley_original.png');
-imwrite(smiley_noisy,'data/smiley/2_smiley_noisy.png');
+imwrite(im2double(circle),'data/circle_dataset/1_circle_original.png');
+imwrite(im2double(circle_noisy),'data/circle_dataset/1_circle_noisy.png');

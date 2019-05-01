@@ -1,4 +1,5 @@
 clear all;
+close all;
 clc;
 
 %% Load dataset
@@ -6,15 +7,22 @@ dataset = DatasetInFolder('data/circle_dataset','*_circle_original.png','*_circl
 
 %% Load image
 noisy = dataset.get_corrupt(2);
+[M,N] = size(noisy);
 
 %% Solver Parameters
 param.verbose = 2;
-param.maxiter = 5000;
+param.maxiter = 8000;
 param.check = 200;
-param.alpha = 60.0;
+
+id_op = IdentityOperator([M,N]);
+grad_op = FinDiffOperator([M,N],'fn');
+q = zeros(M,N,2);
+
+alpha = 1;
+lambda = 0.8;
 
 %% Solving
-[denoised,gap] = solve_rof_cp_single_gaussian(noisy,param);
+[denoised,gap] = solve_generic_l1_l2({},{lambda,alpha},{},{id_op,grad_op},{},{noisy,q},0,0*noisy,param);
 
 %% Plotting
 figure
