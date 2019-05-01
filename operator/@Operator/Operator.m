@@ -10,5 +10,6 @@ classdef Operator
     methods (Abstract)
         val(x);
         conj(x);
+        op_norm(x);
     end
 end

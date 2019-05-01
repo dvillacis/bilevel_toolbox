@@ -26,6 +26,10 @@ classdef IdentityOperator < MatrixOperator
             %   Detailed explanation goes here
             id = speye(obj.Dim(1)*obj.Dim(2));
         end
+        
+        function x_norm = op_norm(~,x)
+            x_norm = sqrt(x.^2);
+        end
     end
 end
 

@@ -8,7 +8,7 @@ function [sol,gap] = solve_generic_l1_l2(lambda,alpha,Ks,Bs,z,q,gamma,xinit,para
 %   Ks: cell array of operators corresponding to l2 terms
 %   Bs: cell array of operators corresponding to the l1 terms
 %   z: l2 data
-%   q: l1 data
+%   q: cell array with the corresponding l1 data
 %   gamma: Huber regularization parameter for l1 terms
 %   param: struct with the algorithm specific parameters
 %     .maxiter (integer, default: 5000): maximum iteration count
@@ -71,7 +71,12 @@ function [sol,gap] = solve_generic_l1_l2(lambda,alpha,Ks,Bs,z,q,gamma,xinit,para
 
   % Test for input vector
   if isvector(xinit)
-    error('xinit must ve a matrix, not a vector.');
+    error('xinit must be a matrix, not a vector.');
+  end
+  
+  % Test for l1 data
+  if ~iscell(q)
+    error('q must be a cell array.');
   end
 
 %   L = sqrt(8+1);
@@ -150,7 +155,7 @@ function prox = calc_prox(y,z,q,Ks,Bs,lambda,alpha,tau)
         y.elements{k} = (y.elements{k}-tau.*z)./(1+0.5*tau*(1./lambda{k}));% l2 proximal
     end
     for l = 1:length(Bs)
-        y.elements{l+length(Ks)} = projection_l2_ball(y.elements{l+length(Ks)}-tau*q,alpha{l});
+        y.elements{l+length(Ks)} = projection_l2_ball(Bs{l},y.elements{l+length(Ks)}-tau*q{l},alpha{l});
     end
     prox = y;
 end
@@ -171,8 +176,8 @@ for k=1:length(Ks)
 end
 primal_2 = 0;
 for l = 1:length(Bs)
-    t = Bs{l}.val(x)-q;
-    nt = alpha{l}.*l2_norm(t);
+    t = Bs{l}.val(x)-q{l};
+    nt = alpha{l}.*Bs{l}.op_norm(t);
     primal_2 = primal_2 + sum(nt(:));
 end
 primal_reg = 0;
@@ -189,8 +194,9 @@ for k=1:length(Ks)
 end
 dual_2 = 0;
 for l = 1:length(Bs)
-  yk = y.elements{k+length(Ks)};
-  dual_2 = dual_2 + yk(:)' * q(:);
+    d = q{l};
+    yk = y.elements{l+length(Ks)};
+    dual_2 = dual_2 + yk(:)' * d(:);
 end
 Kbb = ConcatenatedOperator(Ks{:},Bs{:});
 %dual_reg = 0.5*(1/gamma)*norm2(Kbb.conj(y)).^2;

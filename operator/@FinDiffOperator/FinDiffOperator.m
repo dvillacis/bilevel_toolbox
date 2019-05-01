@@ -80,6 +80,10 @@ classdef FinDiffOperator < Operator
             %bnd = norm(obj.matrix());
             bnd = sqrt(8);
         end
+        
+        function x_norm = op_norm(~,x)
+            x_norm = l2_norm(x);
+        end
     end
 
     methods(Static)
