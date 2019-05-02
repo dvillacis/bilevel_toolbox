@@ -10,8 +10,8 @@ noisy = dataset.get_corrupt(1);
 
 %% Solver Parameters
 param.verbose = 2;
-param.maxiter = 2000;
-param.check = 200;
+param.maxiter = 4000;
+param.check = 500;
 
 id_op = IdentityOperator([M,N]);
 grad_op = FinDiffOperator([M,N],'fn');
@@ -24,5 +24,6 @@ lambda = 4.5;
 [denoised,gap] = solve_generic_l1_l2({lambda},{alpha},{id_op},{grad_op},noisy,{q},0,0*noisy,param);
 
 %% Plotting
-figure
-imagesc_gray(denoised);
+imagesc_gray(dataset.get_target(1),1,'Original','131');
+imagesc_gray(noisy,1,'Gaussian Noise','132');
+imagesc_gray(denoised,1,'ROF Image Denoising','133');

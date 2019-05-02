@@ -5,7 +5,7 @@ clc;
 init_bilevel_toolbox();
 
 %% Load dataset
-%dataset = DatasetInFolder('data/circle_dataset_single_gaussian','*_circle_original.png','*_circle_noisy.png');
+%dataset = DatasetInFolder('data/circle_dataset','*_circle_original.png','*_circle_noisy.png');
 dataset = DatasetInFolder('data/smiley','*_smiley_original.png','*_smiley_noisy.png');
 
 %% Load input image

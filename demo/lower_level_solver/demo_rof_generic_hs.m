@@ -2,7 +2,7 @@ clear all;
 clc;
 
 %% Load dataset
-dataset = DatasetInFolder('data/circle_dataset_single_gaussian','*_circle_original.png','*_circle_noisy.png');
+dataset = DatasetInFolder('data/circle_dataset','*_circle_original.png','*_circle_noisy.png');
 
 %% Load image
 noisy = dataset.get_corrupt(1);
@@ -21,5 +21,10 @@ alpha = 1;
 lambda = 4.5;
 gamma = 1000;
 
-%% Solving
+%% Solving using Hintermuller-Stadler
 [denoised,gap] = solve_generic_l1_l2_hs({lambda},{alpha},{id_op},{grad_op},{noisy},{q},{gamma},0*noisy,param);
+
+%% Plotting
+imagesc_gray(dataset.get_target(1),1,'Original','131');
+imagesc_gray(noisy,1,'Gaussian Noise','132');
+imagesc_gray(denoised,1,'ROF Image Denoising','133');

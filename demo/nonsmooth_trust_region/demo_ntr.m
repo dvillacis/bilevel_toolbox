@@ -2,7 +2,7 @@ clear all;
 clc;
 
 %% Load dataset
-dataset = DatasetInFolder('data/circle_dataset_single_gaussian','*_circle_original.png','*_circle_noisy.png');
+dataset = DatasetInFolder('data/circle_dataset','*_circle_original.png','*_circle_noisy.png');
 
 % Define lower level problem
 lower_level_problem.solve = @(lambda,dataset) solve_ntr_lower_level(lambda,dataset.get_corrupt(1));
