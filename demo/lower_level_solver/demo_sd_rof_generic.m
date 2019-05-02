@@ -22,3 +22,8 @@ lambda = ones(M,N);
 
 %% Solving
 [denoised,gap] = solve_generic_l1_l2({lambda},{alpha},{id_op},{grad_op},noisy,q,0,0*noisy,param);
+
+%% Plotting
+imagesc_gray(dataset.get_target(1),1,'Original','131');
+imagesc_gray(noisy,1,'Gaussian Noise','132');
+imagesc_gray(denoised,1,'SD-ROF Image Denoising','133');
