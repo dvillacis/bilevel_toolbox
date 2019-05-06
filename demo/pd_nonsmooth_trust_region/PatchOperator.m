@@ -31,6 +31,10 @@ classdef PatchOperator < Operator
         function res = conj(obj,y)
             res = y(1:size(obj.KronMatrix,1):end,1:size(obj.KronMatrix,2):end)./obj.KronMatrix(1);
         end
+        
+        function x_norm = op_norm(~,x)
+            x_norm = abs(x);
+        end
     end
 end
 

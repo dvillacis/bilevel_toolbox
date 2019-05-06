@@ -89,14 +89,24 @@ function [sol,state] = nonsmooth_trust_region_algorithm(lower_level_problem,uppe
         state.grad = upper_level_problem.gradient(u,sol,upper_level_problem.dataset,gradient_parameters);
 
     end
+    
+    % Update second order approximation matrix
+    if param.use_bfgs == true
+        state = update_bfgs_approximation(sol,state);
+    elseif param.use_sr1 == true
+        state = update_sr1_approximation(sol,state);
+    end
 
-    [step,state] = tr_subproblem(sol,state,param);
+    % Solving the trust region subproblem
+    if param.use_bfgs == true
+        step = tr_subproblem2(state.bfgs,state.grad(:),state.radius);
+    elseif param.use_sr1 == true
+        step = tr_subproblem2(state.sr1,state.grad(:),state.radius);
+    else
+        step = tr_subproblem3(state.grad(:),state.radius);
+    end
     step = reshape(step,size(state.grad));
     %step = tr_generalized_cauchy(sol,state.grad,state.bfgs,state.radius,cost,param.use_bfgs);
-    
-    % Record previous step
-    state.solprev = sol;
-    state.gradprev = state.grad;
     
     % Quality Indicator calculation
     if param.use_bfgs == true
@@ -125,26 +135,102 @@ function [sol,state] = nonsmooth_trust_region_algorithm(lower_level_problem,uppe
         fprintf('\n');
     end
     
+    
+    
     % Change size of the region
     if rho > param.eta2
-      sol = sol + step;
-      state.radius = param.gamma2*state.radius;
-      if size(sol,1)>1 || size(sol,2)>1
-          state.sol_history = cat(3,state.sol_history,sol);
-      else
-          state.sol_history = [state.sol_history sol];
-      end
-      state.u_history = cat(3,state.u_history,u);
+        % Record previous step
+        state.solprev = sol;
+    
+        % Updating solution
+        sol = sol + step;
+        state.radius = param.gamma2*state.radius;
+        
+        % Record previous gradient
+        state.gradprev = state.grad;
+        
+        % Store information
+        if size(sol,1)>1 || size(sol,2)>1
+            state.sol_history = cat(3,state.sol_history,sol);
+        else
+            state.sol_history = [state.sol_history sol];
+        end
+        state.u_history = cat(3,state.u_history,u);
+        
     elseif rho <= param.eta1
-      state.radius = param.gamma1*state.radius;
+        state.radius = param.gamma1*state.radius;
     else
       %sol = sol + step;
-      state.radius = param.gamma1*state.radius;
+        state.radius = param.gamma1*state.radius;
     end
+    
 end
 
 function nonsmooth_trust_region_finalize(info)
     fprintf('(*) Regularized Model Evaluation\n');
+end
+
+function [step] = tr_subproblem2(Bk,grad,radius)
+    %TODO: Update to a generalized cauchy point
+    sn = -Bk\grad;
+    predn = -grad'*sn-0.5*sn'*Bk*sn;
+    if grad'*Bk*grad <= 0 % Check curvature to see if optimizer is in the boundary or within
+        t = radius/norm(grad);
+    else
+        t = min(norm(grad).^2/(grad'*Bk*grad),radius/(norm(grad)));
+    end
+    sc = -t*grad;
+    predc = -grad'*sc-0.5*sc'*Bk*sc;
+    % Step Selection
+    if norm(sn)<=radius && predn >= 0.8*predc
+        step = sn;
+    else
+        step = sc;
+    end
+end
+
+function [step] = tr_subproblem3(grad,radius)
+    %TODO: Update to a generalized cauchy point
+    sn = -grad;
+    predn = -grad'*sn;
+
+    t = radius/norm(grad);
+    
+    sc = -t*grad;
+    predc = -grad'*sc;
+    % Step Selection
+    if norm(sn)<=radius && predn >= 0.8*predc
+        step = sn;
+    else
+        step = sc;
+    end
+end
+
+function [state] = update_bfgs_approximation(sol,state)
+    if isfield(state,'gradprev')
+        dsol = sol(:)-state.solprev(:);
+        t = state.bfgs*dsol;
+        r = state.grad(:)-state.gradprev(:);
+        if (dsol(:)'*r(:)) < 0
+            fprintf(2, '<<NEGATIVE CURVATURE - Skipping BFGS update>>')
+        else
+            state.bfgs=state.bfgs-1/(dsol'*t)*kron(t',t)+1/(dsol'*r)*kron(r',r);
+        end
+    end
+end
+
+function [state] = update_sr1_approximation(sol,state)
+    if isfield(state,'gradprev')
+        dsol = sol(:)-state.solprev(:);
+        t = state.sr1*dsol;
+        r = state.grad(:)-state.gradprev(:);
+        u = r-t;
+        if abs(dsol'*u) > 1e-8 * norm(dsol)*norm(u)
+            state.sr1=state.sr1+(1/(u'*dsol))*kron(u',u);
+        else
+            fprintf(2, '<<SMALL DENOMINATOR - Skipping SR1 update>>')
+        end
+    end
 end
 
 function [step,state] = tr_subproblem(sol,state,param)

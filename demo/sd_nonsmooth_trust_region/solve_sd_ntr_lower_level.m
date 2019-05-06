@@ -14,6 +14,6 @@ function [y] = solve_sd_ntr_lower_level(lambda,noisy)
     gamma = 0; % NO Huber regularization
 
     %% Call the solver
-    [y,~] = solve_generic_l1_l2({lambda},{alpha},{id_op},{gradient_op},z,q,gamma,0*noisy,param_solver);
+    [y,~] = solve_generic_l1_l2({lambda},{alpha},{id_op},{gradient_op},z,{q},gamma,0*noisy,param_solver);
 end
 

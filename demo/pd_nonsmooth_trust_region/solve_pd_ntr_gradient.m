@@ -1,6 +1,6 @@
 function [grad] = solve_pd_ntr_gradient(u,lambda,dataset,params)
-    original = dataset.get_target(1);
-    noisy = dataset.get_corrupt(1);
+    original = dataset.get_target(2);
+    noisy = dataset.get_corrupt(2);
 
     [M,N] = size(noisy);
     po = PatchOperator(size(lambda),[M,N]);

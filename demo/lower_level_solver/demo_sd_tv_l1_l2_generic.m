@@ -20,9 +20,9 @@ grad_op = FinDiffOperator([M,N],'fn');
 
 q = zeros(M,N,2);
 
-alpha_1 = 1;
-lambda_1 = 0.1;
-lambda_2 = 0.8;
+alpha_1 = 1*ones(M,N);
+lambda_1 = 0.01*tril(ones(M,N));
+lambda_2 = 0.08*triu(ones(M,N));
 
 %% Solving
 [denoised,gap] = solve_generic_l1_l2({lambda_1},{lambda_2,alpha_1},{id_op},{id_op,grad_op},noisy,{noisy,q},0,0*noisy,param);

@@ -71,8 +71,8 @@ function [sol,info] = solve_bilevel(x_0, lower_level_problem, upper_level_proble
     algo = get_bilevel_algo(param.algo);
 
     % Initialization
-    [sol,s,param] = algo.initialize(x_0,lower_level_problem,upper_level_problem,param);
-    [info,iter,s] = bilevel_initialize_convergence_variable(sol,s,lower_level_problem,upper_level_problem,param);
+    [sol,state,param] = algo.initialize(x_0,lower_level_problem,upper_level_problem,param);
+    [info,iter,state] = bilevel_initialize_convergence_variable(sol,state,lower_level_problem,upper_level_problem,param);
 
     % Main Loop
     while 1
@@ -81,9 +81,9 @@ function [sol,info] = solve_bilevel(x_0, lower_level_problem, upper_level_proble
             fprintf('Bilevel Iter %.3i: ',iter);
         end
 
-        [sol,s] = algo.algorithm(x_0,lower_level_problem,upper_level_problem,sol,s,param);
+        [sol,state] = algo.algorithm(x_0,lower_level_problem,upper_level_problem,sol,state,param);
 
-        [stop,crit,s,iter,info] = bilevel_convergence_test(sol,s,iter,lower_level_problem,upper_level_problem,info,param);
+        [stop,crit,state,iter,info] = bilevel_convergence_test(sol,state,iter,lower_level_problem,upper_level_problem,info,param);
 
         % [sol,param] = bilevel_post_process(sol,iter,info,param);
 
@@ -95,9 +95,9 @@ function [sol,info] = solve_bilevel(x_0, lower_level_problem, upper_level_proble
     info.iter = iter;
     info.crit = crit;
     info.time = toc(t1);
-    info.l2_cost_history = s.l2_cost_history;
-    info.sol_history = s.sol_history;
-    info.u_history = s.u_history;
+    info.l2_cost_history = state.l2_cost_history;
+    info.sol_history = state.sol_history;
+    info.u_history = state.u_history;
     
     algo.finalize(info);
 

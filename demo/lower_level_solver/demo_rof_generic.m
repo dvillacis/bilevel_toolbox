@@ -18,7 +18,7 @@ grad_op = FinDiffOperator([M,N],'fn');
 q = zeros(M,N,2);
 
 alpha = 1;
-lambda = 4.5;
+lambda = 2.0;
 
 %% Solving
 [denoised,gap] = solve_generic_l1_l2({lambda},{alpha},{id_op},{grad_op},noisy,{q},0,0*noisy,param);

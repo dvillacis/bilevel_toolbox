@@ -15,6 +15,6 @@ function [y] = solve_pd_ntr_lower_level(lambda,noisy)
     lambda_out = patch_operator(lambda,M);
 
     %% Call the solver
-    [y,~] = solve_generic_l1_l2({lambda_out},{alpha},{id_op},{gradient_op},z,q,gamma,0*noisy,param_solver);
+    [y,~] = solve_generic_l1_l2({lambda_out},{alpha},{id_op},{gradient_op},z,{q},gamma,0*noisy,param_solver);
 end
 

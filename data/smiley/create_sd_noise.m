@@ -2,16 +2,17 @@ clear all;
 close all;
 clc;
 
-smiley = im2double(imread('data/smiley/smiley.png'));
-smiley = 1-imbinarize(smiley,1e-4);
+smiley = imread('data/smiley/1_smiley_original.png');
 [m,n] = size(smiley);
-black_pixels = smiley == 1;
+black_pixels = smiley == 0;
 % Adding gaussian noise std 0.1 to black pixels
-noise1 = 0.1*rand(m,0.5*n);
-noise2 = 0.5*rand(m,0.5*n);
-noise = horzcat(noise1,noise2);
-%noise(black_pixels) = 0;
-smiley_noisy = smiley + noise;
+smiley_noisy = smiley;
+% smiley_noisy(black_pixels) = imnoise(smiley(black_pixels),'gaussian',0,0.1);
+% smiley_noisy(black_pixels(:,1:n/2)) = imnoise(smiley(black_pixels(:,1:n/2)),'gaussian',0,0.5);
+
+smiley_noisy(:,1:n/2) = imnoise(smiley(:,1:n/2),'gaussian',0,0.1);
+smiley_noisy(:,n/2:n) = imnoise(smiley(:,n/2:n),'gaussian',0,0.6);
+
     
 %show image
 figure(1)
@@ -20,5 +21,5 @@ figure(2)
 imagesc_gray(smiley_noisy);
 
 % write image
-imwrite(smiley,'data/smiley/2_smiley_original.png');
-imwrite(smiley_noisy,'data/smiley/2_smiley_noisy.png');
+imwrite(im2double(smiley),'data/smiley/2_smiley_original.png');
+imwrite(im2double(smiley_noisy),'data/smiley/2_smiley_noisy.png');
