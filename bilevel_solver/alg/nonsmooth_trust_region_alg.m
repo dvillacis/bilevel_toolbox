@@ -46,13 +46,17 @@ function [sol,state,param] = nonsmooth_trust_region_initialize(x_0,lower_level_p
     % Test if using second order solver, and setting accordingly
     param = add_default(param,'use_bfgs',false);
     param = add_default(param,'use_lbfgs',false);
+    param = add_default(param,'use_sr1',false);
     param = add_default(param,'no_bfgs',true);
     
     % Setting the hessian initialization accordingly
     if param.use_bfgs == true || param.use_lbfgs == true
         state.bfgs = 0.001*speye(size(x_0(:),1));
+    elseif param.use_sr1 == true
+        state.sr1 = 0.001*speye(size(x_0(:),1));
     else
       state.bfgs = zeros(size(x_0(:),1)); % Use first order model
+      state.sr1 = zeros(size(x_0(:),1));
     end
 
 end
@@ -94,8 +98,14 @@ function [sol,state] = nonsmooth_trust_region_algorithm(lower_level_problem,uppe
     state.solprev = sol;
     state.gradprev = state.grad;
     
-    % Trust Region Modification
-    pred = -state.grad(:)'*step(:) - 0.5*step(:)'*state.bfgs*step(:); % TODO: Fix for limited memory bfgs
+    % Quality Indicator calculation
+    if param.use_bfgs == true
+        pred = -state.grad(:)'*step(:) - 0.5*step(:)'*state.bfgs*step(:);
+    elseif param.use_sr1 == true
+        pred = -state.grad(:)'*step(:) - 0.5*step(:)'*state.sr1*step(:);
+    else
+        pred = -state.grad(:)'*step(:);
+    end
     next_u = lower_level_problem.solve(sol+step,upper_level_problem.dataset);
     next_cost = upper_level_problem.eval(next_u,sol+step,upper_level_problem.dataset);
     ared = cost-next_cost;
@@ -165,6 +175,22 @@ function [step,state] = tr_subproblem(sol,state,param)
         elseif param.use_lbfgs == true
             %TODO implement limited memory bfgs
             error('Not yet implemented');
+        elseif para.use_sr1 == true
+            if norm(sol-state.solprev)>1e-7
+                dsol = sol(:) - state.solprev(:);
+                t = state.bfgs*dsol;
+                r = state.grad(:)-state.gradprev(:);
+                state.sr1=state.sr1-1/(dsol'*t)*kron(t',t)+1/(dsol'*r)*kron(r',r);
+            end
+            sn = -state.sr1\state.grad(:);
+            predn = -state.grad(:)'*sn-0.5*sn'*state.sr1*sn;
+            if state.grad(:)'*state.sr1*state.grad(:) <= 0 % Check curvature to see if optimizer is in the boundary or within
+                t = radius/norm(state.grad(:));
+            else
+                t = min(norm(state.grad(:)).^2/(state.grad(:)'*state.sr1*state.grad(:)),state.radius/(norm(state.grad(:))));
+            end
+            sc = -t*state.grad(:);
+            predc = -state.grad(:)'*sc-0.5*sc'*state.sr1*sc;
         else
             % Otherwise, use a linear model
             sn = -state.grad(:);
