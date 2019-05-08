@@ -12,7 +12,8 @@ function [y] = solve_pd_ntr_lower_level(lambda,noisy)
     q = zeros(M,N,2);
     alpha = ones(M,N);
     gamma = 0; % NO Huber regularization
-    lambda_out = patch_operator(lambda,M);
+    po = PatchOperator(size(lambda),[M,N]);
+    lambda_out = po.val(lambda);
 
     %% Call the solver
     [y,~] = solve_generic_l1_l2({lambda_out},{alpha},{id_op},{gradient_op},z,{q},gamma,0*noisy,param_solver);

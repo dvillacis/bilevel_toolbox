@@ -34,7 +34,7 @@ bilevel_param.eta1 = 0.10;
 bilevel_param.eta2 = 0.80;
 bilevel_param.use_bfgs = true;
 %lambda = 80.0*triu(ones(M,N))+0.9*tril(ones(M,N)); % Initial guess
-lambda = 100*ones(32,32);
+lambda = 100*ones(1,2);
 [sol,info] = solve_bilevel(lambda,lower_level_problem,upper_level_problem,bilevel_param);
 po = PatchOperator(size(sol),[M,N]);
 

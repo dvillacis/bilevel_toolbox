@@ -15,9 +15,8 @@ classdef PatchOperator < Operator
             obj.SizeIn = size_in;
             obj.SizeOut = size_out;
             %assert(obj.SizeIn < obj.SizeOut);
-            N = obj.SizeIn(1);
-            M = obj.SizeOut(1)/N;
-            obj.KronMatrix = ones(M,M);
+            M = obj.SizeOut./obj.SizeIn;
+            obj.KronMatrix = ones(M);
             
         end
         
