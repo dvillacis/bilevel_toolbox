@@ -73,6 +73,8 @@ function [sol,info] = solve_bilevel(x_0, lower_level_problem, upper_level_proble
     % Initialization
     [sol,state,param] = algo.initialize(x_0,lower_level_problem,upper_level_problem,param);
     [info,iter,state] = bilevel_initialize_convergence_variable(sol,state,lower_level_problem,upper_level_problem,param);
+    fprintf('Starting Bilevel Learning\n');
+    paramTable = struct2table(param)
 
     % Main Loop
     while 1
@@ -98,7 +100,7 @@ function [sol,info] = solve_bilevel(x_0, lower_level_problem, upper_level_proble
     info.l2_cost_history = state.l2_cost_history;
     info.sol_history = state.sol_history;
     info.u_history = state.u_history;
-    
+
     algo.finalize(info);
 
     % Print summary

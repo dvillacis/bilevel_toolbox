@@ -1,7 +1,7 @@
 % NONSMOOTH_TRUST_REGION_ALG Trust-Region Algorithm for nonconvex-nonsmooth
 % functions
-% This solver receives an abstract lower and upper level problem descriptions 
-% of a Bilevel problem and finds a Clarke stationary point by means of 
+% This solver receives an abstract lower and upper level problem descriptions
+% of a Bilevel problem and finds a Clarke stationary point by means of
 % a two stages trust-region model; see
 %
 %   De los Reyes, Villacis, Bilevel Parameter Learning for Image Denoising,
@@ -10,14 +10,14 @@
 % INPUTS
 %   x_0: Initial parameter
 %   lower_level_problem: Lower Level Problem struct instance
-%   upper_level_problem: Upper Leveñ Problem struct instance
+%   upper_level_problem: Upper Leveï¿½ Problem struct instance
 %   param: struct with the algorithm specific parameters
 %     .minradius (real, default: 1e-4): model switching radius
 %     .use_bfgs (boolean, default: false): use a second order model using
 %                                           bfgs approximation
 %     .use_lbfgs (boolean, default: false): use a second order model using
 %                                           a limited memory bfgs
-%     .no_bfgs (boolean, default: true): use a linear model
+%     .use_linear (boolean, default: true): use a linear model
 %
 % OUTPUTS
 %   sol: current state of the parameter solution
@@ -28,7 +28,7 @@ function s = nonsmooth_trust_region_alg()
     s.name = 'NONSMOOTH_TRUST_REGION';
     s.initialize = @(x_0, lower_level_problem, upper_level_problem, param) nonsmooth_trust_region_initialize(x_0,lower_level_problem,upper_level_problem,param);
     s.algorithm = @(x_0,lower_level_problem,upper_level_problem,sol,s,param) nonsmooth_trust_region_algorithm(lower_level_problem,upper_level_problem,sol,s,param);
-    s.finalize = @(info) nonsmooth_trust_region_finalize(info);
+    s.finalize = @(info) nonsmooth_trust_region_finalize();
 end
 
 function [sol,state,param] = nonsmooth_trust_region_initialize(x_0,lower_level_problem,upper_level_problem,param)
@@ -47,8 +47,8 @@ function [sol,state,param] = nonsmooth_trust_region_initialize(x_0,lower_level_p
     param = add_default(param,'use_bfgs',false);
     param = add_default(param,'use_lbfgs',false);
     param = add_default(param,'use_sr1',false);
-    param = add_default(param,'no_bfgs',true);
-    
+    param = add_default(param,'use_linear',false);
+
     % Setting the hessian initialization accordingly
     if param.use_bfgs == true || param.use_lbfgs == true
         state.bfgs = 0.001*speye(size(x_0(:),1));
@@ -80,7 +80,7 @@ function [sol,state] = nonsmooth_trust_region_algorithm(lower_level_problem,uppe
 
         % Solving the Bouligand subdifferential element
         gradient_parameters.regularized_model = false;
-        state.grad = upper_level_problem.gradient(u,sol,upper_level_problem.dataset,gradient_parameters);       
+        state.grad = upper_level_problem.gradient(u,sol,upper_level_problem.dataset,gradient_parameters);
 
     else
 
@@ -89,7 +89,7 @@ function [sol,state] = nonsmooth_trust_region_algorithm(lower_level_problem,uppe
         state.grad = upper_level_problem.gradient(u,sol,upper_level_problem.dataset,gradient_parameters);
 
     end
-    
+
     % Update second order approximation matrix
     if param.use_bfgs == true
         state = update_bfgs_approximation(sol,state);
@@ -99,15 +99,15 @@ function [sol,state] = nonsmooth_trust_region_algorithm(lower_level_problem,uppe
 
     % Solving the trust region subproblem
     if param.use_bfgs == true
-        step = tr_subproblem2(state.bfgs,state.grad(:),state.radius);
+        step = tr_subproblem_quadratic(sol(:),cost,state.bfgs,state.grad(:),state.radius);
     elseif param.use_sr1 == true
-        step = tr_subproblem2(state.sr1,state.grad(:),state.radius);
+        step = tr_subproblem_quadratic(sol(:),cost,state.sr1,state.grad(:),state.radius);
     else
-        step = tr_subproblem3(state.grad(:),state.radius);
+        step = tr_subproblem_linear(sol(:),cost,state.grad(:),state.radius);
     end
     step = reshape(step,size(state.grad));
     %step = tr_generalized_cauchy(sol,state.grad,state.bfgs,state.radius,cost,param.use_bfgs);
-    
+
     % Quality Indicator calculation
     if param.use_bfgs == true
         pred = -state.grad(:)'*step(:) - 0.5*step(:)'*state.bfgs*step(:);
@@ -120,35 +120,32 @@ function [sol,state] = nonsmooth_trust_region_algorithm(lower_level_problem,uppe
     next_cost = upper_level_problem.eval(next_u,sol+step,upper_level_problem.dataset);
     ared = cost-next_cost;
     rho = ared/pred;
-    
-    
+
     if size(sol,1)>1 || size(sol,2)>1
-        
+
         fprintf('l2_cost = %f, norm_sol = %f, norm_grad = %f, radius = %f, rho = %f, norm_step = %f',cost,norm(sol),norm(state.grad(:),inf),state.radius,rho,norm(step));
     else
         fprintf('l2_cost = %f, sol = %f, grad = %f, radius = %f, rho = %f, step = %f',cost,sol,state.grad,state.radius,rho,step);
     end
-    
+
     if gradient_parameters.regularized_model == 1
         fprintf(' * \n');
     else
         fprintf('\n');
     end
-    
-    
-    
+
     % Change size of the region
     if rho > param.eta2
         % Record previous step
         state.solprev = sol;
-    
+
         % Updating solution
         sol = sol + step;
         state.radius = param.gamma2*state.radius;
-        
+
         % Record previous gradient
         state.gradprev = state.grad;
-        
+
         % Store information
         if size(sol,1)>1 || size(sol,2)>1
             state.sol_history = cat(3,state.sol_history,sol);
@@ -156,53 +153,88 @@ function [sol,state] = nonsmooth_trust_region_algorithm(lower_level_problem,uppe
             state.sol_history = [state.sol_history sol];
         end
         state.u_history = cat(3,state.u_history,u);
-        
+
     elseif rho <= param.eta1
         state.radius = param.gamma1*state.radius;
     else
       %sol = sol + step;
         state.radius = param.gamma1*state.radius;
     end
-    
+
 end
 
-function nonsmooth_trust_region_finalize(info)
+function nonsmooth_trust_region_finalize()
     fprintf('(*) Regularized Model Evaluation\n');
 end
 
-function [step] = tr_subproblem2(Bk,grad,radius)
+function [step] = tr_subproblem_quadratic(sol,cost,Bk,grad,radius)
     %TODO: Update to a generalized cauchy point
-    sn = -Bk\grad;
-    predn = -grad'*sn-0.5*sn'*Bk*sn;
-    if grad'*Bk*grad <= 0 % Check curvature to see if optimizer is in the boundary or within
-        t = radius/norm(grad);
-    else
-        t = min(norm(grad).^2/(grad'*Bk*grad),radius/(norm(grad)));
-    end
-    sc = -t*grad;
-    predc = -grad'*sc-0.5*sc'*Bk*sc;
-    % Step Selection
-    if norm(sn)<=radius && predn >= 0.8*predc
-        step = sn;
-    else
-        step = sc;
-    end
+    search_direction = -Bk\grad;
+    step = find_generalized_cauchy_point(sol,cost,search_direction,radius,grad,Bk);
+    % predn = -grad'*sn-0.5*sn'*Bk*sn;
+    % if grad'*Bk*grad <= 0 % Check curvature to see if optimizer is in the boundary or within
+    %     t = radius/norm(grad);
+    % else
+    %     t = min(norm(grad).^2/(grad'*Bk*grad),radius/(norm(grad)));
+    % end
+    % sc = -t*grad;
+    % predc = -grad'*sc-0.5*sc'*Bk*sc;
+    % % Step Selection
+    % if norm(sn)<=radius && predn >= 0.8*predc
+    %     step = sn;
+    % else
+    %     step = sc;
+    % end
 end
 
-function [step] = tr_subproblem3(grad,radius)
+function [step] = tr_subproblem_linear(sol,cost,grad,radius)
     %TODO: Update to a generalized cauchy point
-    sn = -grad;
-    predn = -grad'*sn;
+    search_direction = -grad;
+    step = find_generalized_cauchy_point(sol,cost,search_direction,radius,grad);
+    % predn = -grad'*sn;
+    % t = radius/norm(grad);
+    % sc = -t*grad;
+    % predc = -grad'*sc;
+    % % Step Selection
+    % if norm(sn)<=radius && predn >= 0.8*predc
+    %     step = sn;
+    % else
+    %     step = sc;
+    % end
+end
+
+function [step] = find_generalized_cauchy_point(sol,cost,delta,radius,grad,hess)
+
+    % Check if hessian is present
+    if nargin < 5
+        hess = 0;
+    end
 
     t = radius/norm(grad);
-    
-    sc = -t*grad;
-    predc = -grad'*sc;
-    % Step Selection
-    if norm(sn)<=radius && predn >= 0.8*predc
-        step = sn;
-    else
-        step = sc;
+
+    kubs = 0.2;
+    tmin = 0;
+    tmax = Inf;
+    maxit = 1000;
+    it=0;
+    while it < maxit
+        sol_ = sol + t*delta;
+        sol_ = projection_linf_pos(sol,sol_,radius); % Project into the positive half space intersection inf ball.
+        sk = sol_-sol;
+        mk = cost+grad'*sk+0.5*sk'*hess*sk;
+        % Checking stopping conditions
+        if norm(sk)>radius || mk > cost+kubs*grad'*sk
+            tmax = t;
+        else
+            step = sk;
+            break;
+        end
+        if tmax == Inf
+            t = 2*t;
+        else
+            t = 0.5*(tmin+tmax);
+        end
+        it = it + 1;
     end
 end
 
@@ -232,6 +264,7 @@ function [state] = update_sr1_approximation(sol,state)
         end
     end
 end
+
 
 function [step,state] = tr_subproblem(sol,state,param)
     % Step calculation
@@ -284,7 +317,7 @@ function [step,state] = tr_subproblem(sol,state,param)
             t = state.radius/norm(state.grad(:));
             sc = -t*state.grad(:);
             predc = -state.grad(:)'*sc;
-            
+
         end
     else
         % Otherwise, use a linear model
@@ -325,7 +358,7 @@ function step = tr_generalized_cauchy(sol,grad,hess,radius,cost,use_bfgs)
     maxit = 1000;
     it=0;
     step = zeros(size(sol));
-    
+
     % Solve search direction
     if use_bfgs
         if find(isnan(hess))
@@ -338,7 +371,7 @@ function step = tr_generalized_cauchy(sol,grad,hess,radius,cost,use_bfgs)
     end
 
     while it < maxit
-        
+
         sol_ = sol+t*delta;
         sol_ = projection_linf_pos(sol,sol_,radius); % Project into the positive half space intersection inf ball.
         sk = sol_-sol;
@@ -367,32 +400,17 @@ function step = tr_generalized_cauchy(sol,grad,hess,radius,cost,use_bfgs)
 end
 
 
-function [xi,step] = tr_subproblem_complex(grad,hess,radius)
-    [m,n] = size(grad);
-    B = spdiags(ones(n+1,1),1,m,n+1);
-    H = B'*hess*B;
-    f = [1;zeros(n,1)];
-    b = zeros(m,1);
-    A = [-ones(m,1),grad];
-    obj = @(x) 0.5*x'*H*x + f'*x;
-    nonloc = @(x) norm_constraint(x,radius);
-    options = optimoptions('fmincon','Display','none');
-    [x,fval] = fmincon(obj,[0;0],A,b,[],[],[],[],nonloc,options);
-    xi = x(1);
-    step = x(2:end);
-end
-
-function get_Hg_lbgfs(grad, S, Y, hdiag)
-% This function returns the approximate inverse Hessian multiplied by the gradient, H*g
-% Input
-%   S:    Memory matrix (n by k) , s{i}=x{i+1}-x{i}
-%   Y:    Memory matrix (n by k) , df{i}=df{i+1}-df{i}
-%   g:    gradient (n by 1)
-%   hdiag value of initial Hessian diagonal elements (scalar)
-% Output
-%   Hg    the the approximate inverse Hessian multiplied by the gradient g
-% Reference
-%   Nocedal, J. (1980). "Updating Quasi-Newton Matrices with Limited Storage".
-%   Wiki http://en.wikipedia.org/wiki/Limited-memory_BFGS
-%   two loop recursion
-end
+% function [xi,step] = tr_subproblem_complex(grad,hess,radius)
+%     [m,n] = size(grad);
+%     B = spdiags(ones(n+1,1),1,m,n+1);
+%     H = B'*hess*B;
+%     f = [1;zeros(n,1)];
+%     b = zeros(m,1);
+%     A = [-ones(m,1),grad];
+%     obj = @(x) 0.5*x'*H*x + f'*x;
+%     nonloc = @(x) norm_constraint(x,radius);
+%     options = optimoptions('fmincon','Display','none');
+%     [x,fval] = fmincon(obj,[0;0],A,b,[],[],[],[],nonloc,options);
+%     xi = x(1);
+%     step = x(2:end);
+% end
