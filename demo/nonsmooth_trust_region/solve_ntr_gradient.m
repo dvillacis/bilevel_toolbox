@@ -1,6 +1,6 @@
 function [grad] = solve_ntr_gradient(u,lambda,dataset,params)
-    original = dataset.get_target(6);
-    noisy = dataset.get_corrupt(6);
+    original = dataset.get_target(1);
+    noisy = dataset.get_corrupt(1);
 
     [M,N] = size(noisy);
     nabla = gradient_matrix(M,N);

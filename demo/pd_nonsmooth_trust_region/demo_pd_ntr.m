@@ -24,17 +24,17 @@ upper_level_problem.dataset = dataset;
 %% Solving the bilevel problem
 bilevel_param.verbose = 2;
 bilevel_param.maxit = 300;
-bilevel_param.tol = 1e-4;
+bilevel_param.tol = 1e-3;
 bilevel_param.algo = 'NONSMOOTH_TRUST_REGION';
-bilevel_param.radius = 500.0;
+bilevel_param.radius = 50.0;
 bilevel_param.minradius = 0.1;
 bilevel_param.gamma1 = 0.5;
 bilevel_param.gamma2 = 1.5;
 bilevel_param.eta1 = 0.10;
 bilevel_param.eta2 = 0.80;
-bilevel_param.use_bfgs = true;
+bilevel_param.use_sr1 = true;
 %lambda = 80.0*triu(ones(M,N))+0.9*tril(ones(M,N)); % Initial guess
-lambda = 100*ones(1,2);
+lambda = 10*ones(4,4);
 [sol,info] = solve_bilevel(lambda,lower_level_problem,upper_level_problem,bilevel_param);
 po = PatchOperator(size(sol),[M,N]);
 
@@ -43,9 +43,10 @@ figure(1)
 [a,b] = meshgrid(1:M,1:N);
 surf(a,b,po.val(sol));
 
-imagesc_gray(dataset.get_target(1),2,'Original','131');
-imagesc_gray(info.u_history(:,:,1),2,'Gaussian Noise','132');
-imagesc_gray(info.u_history(:,:,end),2,'ROF Optimal Image Denoising','133');
+imagesc_gray(dataset.get_target(1),2,'Original','221');
+imagesc_gray(info.u_history(:,:,1),2,'Gaussian Noise','222');
+imagesc_gray(po.val(info.sol_history(:,:,end)),2,'Learned Parameter','223');
+imagesc_gray(info.u_history(:,:,end),2,'ROF Optimal Image Denoising','224');
 
 
 %% Save animations
