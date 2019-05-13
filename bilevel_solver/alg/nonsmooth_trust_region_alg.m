@@ -53,9 +53,9 @@ function [sol,state,param] = nonsmooth_trust_region_initialize(x_0,lower_level_p
 
     % Setting the hessian initialization accordingly
     if param.use_bfgs == true || param.use_lbfgs == true
-        state.bfgs = 0.001*speye(size(x_0(:),1));
+        state.bfgs = 1e-8*speye(size(x_0(:),1));
     elseif param.use_sr1 == true
-        state.sr1 = 0.001*speye(size(x_0(:),1));
+        state.sr1 = 1e-8*speye(size(x_0(:),1));
     else
       state.bfgs = zeros(size(x_0(:),1)); % Use first order model
       state.sr1 = zeros(size(x_0(:),1));
@@ -100,10 +100,17 @@ function [sol,state] = nonsmooth_trust_region_algorithm(lower_level_problem,uppe
     end
 
     % Solving the trust region subproblem
+    % if param.use_bfgs == true
+    %     step = tr_subproblem_quadratic(sol(:),cost,state.bfgs,state.grad(:),state.radius);
+    % elseif param.use_sr1 == true
+    %     step = tr_subproblem_quadratic(sol(:),cost,state.sr1,state.grad(:),state.radius);
+    % else
+    %     step = tr_subproblem_linear(sol(:),cost,state.grad(:),state.radius);
+    % end
     if param.use_bfgs == true
-        step = tr_subproblem_quadratic(sol(:),cost,state.bfgs,state.grad(:),state.radius);
+        step = solve_tr_subproblem(sol(:),state.grad(:),state.bfgs,state.radius);
     elseif param.use_sr1 == true
-        step = tr_subproblem_quadratic(sol(:),cost,state.sr1,state.grad(:),state.radius);
+        step = solve_tr_subproblem(sol(:),state.grad(:),state.sr1,state.radius);
     else
         step = tr_subproblem_linear(sol(:),cost,state.grad(:),state.radius);
     end
@@ -180,6 +187,52 @@ function x = projection_linf_pos(x0,x,radius)
     x(ind_b) = x_b(ind_b);
 end
 
+function [x,directions] = solve_tr_subproblem(sol,grad,Bk,radius)
+    n = length(sol);
+    errtol = 1e-4;
+    maxiters = 1000;
+    x = zeros(n,1);
+    r = -grad-Bk*x;
+    rho = r'*r;
+    tst = norm(r);
+    terminate = errtol*norm(grad);
+    it = 1;
+    directions = zeros(n,1);
+    hatdel = radius*(1-1.d-6);
+    while((tst>terminate) && (it <= maxiters) && norm(x) <= hatdel)
+        if(it==1)
+            p = r;
+        else
+            beta = rho/rho_old;
+            p = r + beta*p;
+        end
+        w = Bk*p;
+        alpha = p'*w;
+        if(alpha <=0 )
+            ac = p'*p;
+            bc = 2*(x'*p);
+            cc = x'*x - radius*radius;
+            alpha = (-bc + sqrt(bc*bc-4*ac*cc))/(2*ac);
+            fprintf('NEGATIVE CURVATURE ');
+        else
+            alpha = rho/alpha;
+            if norm(x+alpha*p)>radius
+                ac = p'*p;
+                bc = 2*(x'*p);
+                cc = x'*x - radius*radius;
+                alpha=(-bc + sqrt(bc*bc - 4*ac*cc))/(2*ac);
+            end
+        end
+        x = x+alpha*p;
+        directions(:,it)=alpha*p;
+        r = r - alpha*w;
+        tst = norm(r);
+        rho_old = rho;
+        rho = r'*r;
+        it = it+1;
+    end
+end
+
 function [step] = tr_subproblem_quadratic(sol,cost,Bk,grad,radius)
     %TODO: Update to a generalized cauchy point
     step = find_cauchy_point(sol,radius,grad,Bk);
@@ -231,7 +284,7 @@ function [step] = find_cauchy_point(sol,radius,grad,hess)
         sn1 = -hess\grad;
         sn2 = hess\grad;
     end
-    
+
     % Dogleg strategy over a box
     predn1 = -grad'*sn1-0.5*sn1'*hess*sn1;
     predn2 = -grad'*sn2-0.5*sn2'*hess*sn2;
@@ -242,7 +295,7 @@ function [step] = find_cauchy_point(sol,radius,grad,hess)
         sn = sn2;
         predn = predn2;
     end
-    
+
     if grad'*hess*grad <= 0 % Check curvature to see if optimizer is in the boundary or within
         t = radius/norm(grad);
     else
@@ -258,7 +311,7 @@ function [step] = find_cauchy_point(sol,radius,grad,hess)
         step = sc;
         fprintf('CAUCHY ');
     end
-    
+
 end
 
 function [step] = find_generalized_cauchy_point(sol,cost,delta,radius,grad,hess)
@@ -379,7 +432,7 @@ end
 %             t = state.radius/norm(state.grad(:));
 %             sc = -t*state.grad(:);
 %             predc = -state.grad(:)'*sc;
-% 
+%
 %         end
 %     else
 %         % Otherwise, use a linear model
@@ -389,7 +442,7 @@ end
 %         sc = -t*state.grad(:);
 %         predc = -state.grad(:)'*sc;
 %     end
-% 
+%
 %     % Step Selection
 %     if norm(sn)<=state.radius && predn >= 0.8*predc
 %         step = sn;
@@ -411,7 +464,7 @@ end
 %     maxit = 1000;
 %     it=0;
 %     step = zeros(size(sol));
-% 
+%
 %     % Solve search direction
 %     if use_bfgs
 %         if find(isnan(hess))
@@ -422,9 +475,9 @@ end
 %     else
 %         delta=-grad; % Use gradient direction
 %     end
-% 
+%
 %     while it < maxit
-% 
+%
 %         sol_ = sol+t*delta;
 %         sol_ = projection_linf_pos(sol,sol_,radius); % Project into the positive half space intersection inf ball.
 %         sk = sol_-sol;
@@ -441,7 +494,7 @@ end
 %             step = sk;
 %             break;
 %         end
-% 
+%
 %         if tmax == Inf
 %             t = 2*t;
 %         else
@@ -449,7 +502,7 @@ end
 %         end
 %         it = it + 1;
 %     end
-% 
+%
 % end
 
 

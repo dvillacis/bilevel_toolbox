@@ -18,14 +18,15 @@ bilevel_param.verbose = 2;
 bilevel_param.maxit = 40;
 bilevel_param.tol = 1e-4;
 bilevel_param.algo = 'NONSMOOTH_TRUST_REGION';
-bilevel_param.radius = 20.0;
+bilevel_param.radius = 100.0;
 bilevel_param.minradius = 0.1;
-bilevel_param.gamma1 = 0.5;
-bilevel_param.gamma2 = 1.5;
+bilevel_param.gamma1 = 0.1;
+bilevel_param.gamma2 = 1.9;
 bilevel_param.eta1 = 0.10;
-bilevel_param.eta2 = 0.80;
-bilevel_param.use_sr1 = true;
-lambda = 50;
+bilevel_param.eta2 = 0.90;
+bilevel_param.use_bfgs = true;
+%bilevel_param.use_sr1 = true;
+lambda = 150;
 [optimal_parameter,info] = solve_bilevel(lambda,lower_level_problem,upper_level_problem,bilevel_param);
 
 %% Plotting
