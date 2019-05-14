@@ -28,13 +28,13 @@ bilevel_param.tol = 1e-5;
 bilevel_param.algo = 'NONSMOOTH_TRUST_REGION';
 bilevel_param.radius = 50.0;
 bilevel_param.minradius = 0.1;
-bilevel_param.gamma1 = 0.1;
-bilevel_param.gamma2 = 1.9;
+bilevel_param.gamma1 = 0.5;
+bilevel_param.gamma2 = 2.0;
 bilevel_param.eta1 = 0.10;
 bilevel_param.eta2 = 0.90;
-bilevel_param.use_sr1 = true;
+%bilevel_param.use_sr1 = true;
 %lambda = 80.0*triu(ones(M,N))+0.9*tril(ones(M,N)); % Initial guess
-lambda = 100*rand(64,64);
+lambda = 1000*rand(32,32);
 [sol,info] = solve_bilevel(lambda,lower_level_problem,upper_level_problem,bilevel_param);
 po = PatchOperator(size(sol),[M,N]);
 

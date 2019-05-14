@@ -53,9 +53,9 @@ function [sol,state,param] = nonsmooth_trust_region_initialize(x_0,lower_level_p
 
     % Setting the hessian initialization accordingly
     if param.use_bfgs == true || param.use_lbfgs == true
-        state.bfgs = 1e-8*speye(size(x_0(:),1));
+        state.bfgs = speye(size(x_0(:),1));
     elseif param.use_sr1 == true
-        state.sr1 = 1e-8*speye(size(x_0(:),1));
+        state.sr1 = speye(size(x_0(:),1));
     else
       state.bfgs = zeros(size(x_0(:),1)); % Use first order model
       state.sr1 = zeros(size(x_0(:),1));
@@ -112,7 +112,7 @@ function [sol,state] = nonsmooth_trust_region_algorithm(lower_level_problem,uppe
     elseif param.use_sr1 == true
         step = solve_tr_subproblem(sol(:),state.grad(:),state.sr1,state.radius);
     else
-        step = tr_subproblem_linear(sol(:),cost,state.grad(:),state.radius);
+        step = solve_tr_subproblem(sol(:),state.grad(:),0,state.radius);
     end
     step = reshape(step,size(state.grad));
     %step = tr_generalized_cauchy(sol,state.grad,state.bfgs,state.radius,cost,param.use_bfgs);
@@ -277,9 +277,10 @@ end
 
 function [step] = find_cauchy_point(sol,radius,grad,hess)
     % Check if hessian is present
-    if nargin < 3
+    if nargin < 4
         hess = 0;
-        sn = -grad;
+        sn1 = -grad;
+        sn2 = -grad;
     else
         sn1 = -hess\grad;
         sn2 = hess\grad;
@@ -354,12 +355,14 @@ function [state] = update_bfgs_approximation(sol,state)
         dsol = sol(:)-state.solprev(:);
         t = state.bfgs*dsol;
         r = state.grad(:)-state.gradprev(:);
-        if norm(r) > 1e-8
+        if norm(r) > 1e-10
             if (dsol(:)'*r(:)) < 0
                 fprintf(2, '<<NEGATIVE CURVATURE - Skipping BFGS update>>')
             else
                 state.bfgs=state.bfgs-1/(dsol'*t)*kron(t',t)+1/(dsol'*r)*kron(r',r);
             end
+        else
+            state.gradprev = state.grad;
         end
     end
 end
@@ -376,6 +379,8 @@ function [state] = update_sr1_approximation(sol,state)
             else
                 fprintf(2, '<<SMALL DENOMINATOR - Skipping SR1 update>>')
             end
+        else
+            state.gradprev = state.grad;
         end
     end
 end
