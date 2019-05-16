@@ -122,4 +122,30 @@ function P=prodesc(q,p,N)
     end
 end
 
+function [x,directions] = conjugate_gradient(x,b,H,errtol,maxiters)
+    r = b-H*x;
+    rho = r'*r;
+    tst = norm(r);
+    terminate = errtol*norm(grad);
+    it = 1;
+    directions = zeros(n,1);
+    hatdel = radius*(1-1.d-6);
+    while((tst>terminate) && (it <= maxiters) && norm(x) <= hatdel)
+        if(it==1)
+            p = r;
+        else
+            beta = rho/rho_old;
+            p = r + beta*p;
+        end
+        w = H*p;
+        alpha = rho/(p'*w);
+        x = x+alpha*p;
+        r = r-alpha*w;
+        tst = norm(r);
+        rho_old = rho;
+        rho = r'*r;
+        it = it+1;
+    end
+end
+
 

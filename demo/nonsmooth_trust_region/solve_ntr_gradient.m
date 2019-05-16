@@ -27,8 +27,8 @@ function [grad] = solve_ntr_gradient(u,lambda,dataset,params)
         Adj = [A B;E-C Inact+sqrt(eps)*Act];
         %Adj = [A B;E-C Inact];
         Track = [u(:)-original(:);sparse(2*M*N,1)];
-        %mult = lsqlin(Adj,Track);
         mult = Adj\Track;
+        %mult = conjugate_gradient(0*Track,Track,Adj,1e-4,1000);
         adj = mult(1:N*M);
     else
         % Get Active, Strongly Active and Inactive - gamma sets
@@ -97,5 +97,30 @@ function prod = outer_product(p,q,m,n)
     c = p(:,2).*q(:,1);
     d = p(:,2).*q(:,2);
     prod = [spdiags(a,0,m*n,m*n) spdiags(b,0,m*n,m*n); spdiags(c,0,m*n,m*n) spdiags(d,0,m*n,m*n)];
+end
+
+function [x] = conjugate_gradient(x,b,H,errtol,maxiters)
+    n = length(x);
+    r = b-H*x;
+    rho = r'*r;
+    tst = norm(r);
+    terminate = errtol*norm(b);
+    it = 1;
+    while((tst>terminate) && (it <= maxiters))
+        if(it==1)
+            p = r;
+        else
+            beta = rho/rho_old;
+            p = r + beta*p;
+        end
+        w = H*p;
+        alpha = rho/(p'*w);
+        x = x+alpha*p;
+        r = r-alpha*w;
+        tst = norm(r);
+        rho_old = rho;
+        rho = r'*r;
+        it = it+1;
+    end
 end
 

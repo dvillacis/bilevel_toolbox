@@ -34,7 +34,7 @@ bilevel_param.eta1 = 0.10;
 bilevel_param.eta2 = 0.80;
 %bilevel_param.use_sr1 = true;
 %lambda = 80.0*triu(ones(M,N))+0.9*tril(ones(M,N)); % Initial guess
-lambda = 100*ones(1,2);
+lambda = 100*ones(4,4);
 [sol,info] = solve_bilevel(lambda,lower_level_problem,upper_level_problem,bilevel_param);
 po = PatchOperator(size(sol),[M,N]);
 
@@ -50,8 +50,8 @@ imagesc_gray(info.u_history(:,:,end),2,'ROF Optimal Image Denoising','224');
 
 
 %% Save animations
-%create_animation_image(info.u_history,'/Users/dvillacis/Desktop/smiley_pd_evolution2.gif');
-%create_animation_parameter(info.sol_history,'/Users/dvillacis/Desktop/smiley_pd_param_evolution2.gif',po);
+create_animation_image(info.u_history,'/Users/dvillacis/Desktop/smiley_pd_evolution2.gif');
+create_animation_parameter(info.sol_history,'/Users/dvillacis/Desktop/smiley_pd_param_evolution2.gif',po);
 
 %% Saving experiment
 %save_experiment(info,'/Users/dvillacis/Desktop/ntr_experiment_pd_sr1_2');

@@ -14,7 +14,7 @@ dataset = DatasetInFolder('data/smiley','*_smiley_original.png','*_smiley_noisy.
 [M,N]=size(dataset.get_target(2));
 
 % Define lower level problem
-lower_level_problem.solve = @(lambda,dataset) solve_sd_ntr_lower_level(lambda,dataset.get_corrupt(2));
+lower_level_problem.solve = @(lambda,dataset) solve_sd_ntr_lower_level(lambda,dataset.get_corrupt(1));
 
 % Define upper level problem
 upper_level_problem.eval = @(u,lambda,dataset) eval_sd_ntr_upper_level(u,lambda,dataset);
@@ -32,9 +32,9 @@ bilevel_param.gamma1 = 0.5;
 bilevel_param.gamma2 = 1.5;
 bilevel_param.eta1 = 0.10;
 bilevel_param.eta2 = 0.80;
-bilevel_param.use_bfgs = true;
+
 %lambda = 80.0*triu(ones(M,N))+0.9*tril(ones(M,N)); % Initial guess
-lambda = 10*ones(M,N);
+lambda = 10*rand(M,N);
 [sol,info] = solve_bilevel(lambda,lower_level_problem,upper_level_problem,bilevel_param);
 
 %% Plot
@@ -42,8 +42,7 @@ figure(1)
 [a,b] = meshgrid(1:M,1:N);
 surf(a,b,sol);
 
-figure(2)
-imagesc_gray(info.u_history(:,:,end));
-
-figure(3)
-imagesc_gray(info.sol_history(:,:,end));
+imagesc_gray(dataset.get_target(1),2,'Original','221');
+imagesc_gray(info.u_history(:,:,1),2,'Gaussian Noise','222');
+imagesc_gray(info.sol_history(:,:,end),2,'Learned Parameter','223');
+imagesc_gray(info.u_history(:,:,end),2,'ROF Optimal Image Denoising','224');
