@@ -24,17 +24,17 @@ upper_level_problem.dataset = dataset;
 %% Solving the bilevel problem
 bilevel_param.verbose = 2;
 bilevel_param.maxit = 300;
-bilevel_param.tol = 1e-5;
+bilevel_param.tol = 1e-3;
 bilevel_param.algo = 'NONSMOOTH_TRUST_REGION';
 bilevel_param.radius = 50.0;
 bilevel_param.minradius = 0.1;
 bilevel_param.gamma1 = 0.5;
 bilevel_param.gamma2 = 2.0;
 bilevel_param.eta1 = 0.10;
-bilevel_param.eta2 = 0.90;
+bilevel_param.eta2 = 0.80;
 %bilevel_param.use_sr1 = true;
 %lambda = 80.0*triu(ones(M,N))+0.9*tril(ones(M,N)); % Initial guess
-lambda = 1000*rand(32,32);
+lambda = 100*ones(1,2);
 [sol,info] = solve_bilevel(lambda,lower_level_problem,upper_level_problem,bilevel_param);
 po = PatchOperator(size(sol),[M,N]);
 

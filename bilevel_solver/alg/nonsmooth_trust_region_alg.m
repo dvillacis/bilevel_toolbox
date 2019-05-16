@@ -53,9 +53,9 @@ function [sol,state,param] = nonsmooth_trust_region_initialize(x_0,lower_level_p
 
     % Setting the hessian initialization accordingly
     if param.use_bfgs == true || param.use_lbfgs == true
-        state.bfgs = speye(size(x_0(:),1));
+        state.bfgs = 0.1*speye(size(x_0(:),1));
     elseif param.use_sr1 == true
-        state.sr1 = speye(size(x_0(:),1));
+        state.sr1 = 0.1*speye(size(x_0(:),1));
     else
       state.bfgs = zeros(size(x_0(:),1)); % Use first order model
       state.sr1 = zeros(size(x_0(:),1));
@@ -187,19 +187,19 @@ function x = projection_linf_pos(x0,x,radius)
     x(ind_b) = x_b(ind_b);
 end
 
-function [x,directions] = solve_tr_subproblem(sol,grad,Bk,radius)
+function [step,directions] = solve_tr_subproblem(sol,grad,Bk,radius)
     n = length(sol);
     errtol = 1e-4;
     maxiters = 1000;
-    x = zeros(n,1);
-    r = -grad-Bk*x;
+    step = zeros(n,1);
+    r = -grad-Bk*step;
     rho = r'*r;
     tst = norm(r);
     terminate = errtol*norm(grad);
     it = 1;
     directions = zeros(n,1);
     hatdel = radius*(1-1.d-6);
-    while((tst>terminate) && (it <= maxiters) && norm(x) <= hatdel)
+    while((tst>terminate) && (it <= maxiters) && norm(step) <= hatdel)
         if(it==1)
             p = r;
         else
@@ -208,22 +208,22 @@ function [x,directions] = solve_tr_subproblem(sol,grad,Bk,radius)
         end
         w = Bk*p;
         alpha = p'*w;
-        if(alpha <=0 )
-            ac = p'*p;
-            bc = 2*(x'*p);
-            cc = x'*x - radius*radius;
-            alpha = (-bc + sqrt(bc*bc-4*ac*cc))/(2*ac);
+        if(alpha <0 )
             fprintf('NEGATIVE CURVATURE ');
+            sol_ = sol+radius*p;
+            sol_ = projection_linf_pos(sol,sol_,radius);
+            step = sol_-sol;
+            break;
         else
             alpha = rho/alpha;
-            if norm(x+alpha*p)>radius
-                ac = p'*p;
-                bc = 2*(x'*p);
-                cc = x'*x - radius*radius;
-                alpha=(-bc + sqrt(bc*bc - 4*ac*cc))/(2*ac);
+            if norm(step+alpha*p)>radius
+                sol_ = sol+alpha*p;
+                sol_ = projection_linf_pos(sol,sol_,radius);
+                step = sol_-sol;
+                break;
             end
         end
-        x = x+alpha*p;
+        step = step+alpha*p;
         directions(:,it)=alpha*p;
         r = r - alpha*w;
         tst = norm(r);

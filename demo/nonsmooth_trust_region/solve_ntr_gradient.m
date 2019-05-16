@@ -22,10 +22,12 @@ function [grad] = solve_ntr_gradient(u,lambda,dataset,params)
         C = -Inact*(prodKuKu-spdiags(1./denominador,0,2*M*N,2*M*N))*nabla;
         D = speye(2*M*N);
         E = Act*nabla;
-        F = sparse(2*M*N,2*M*N)+0.001*speye(2*M*N,2*M*N);
+        F = sparse(2*M*N,2*M*N)+0.01*speye(2*M*N,2*M*N);
         %Adj = [A B;C D;E F];
         Adj = [A B;E-C Inact+sqrt(eps)*Act];
+        %Adj = [A B;E-C Inact];
         Track = [u(:)-original(:);sparse(2*M*N,1)];
+        %mult = lsqlin(Adj,Track);
         mult = Adj\Track;
         adj = mult(1:N*M);
     else
@@ -77,7 +79,7 @@ function [grad] = solve_ntr_gradient(u,lambda,dataset,params)
     end
 
     % Calculating the gradient
-    beta = 0.0001;
+    beta = 0;
     grad = (noisy(:)-u(:))'*adj + beta*lambda;
 end
 
