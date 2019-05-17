@@ -19,7 +19,7 @@ grad_op = FinDiffOperator([M,N],'fn');
 q = zeros(M,N,2);
 
 alpha = ones(M,N);
-lambda = [3 ; 1.2];
+lambda = [3 2 ;1 1.2];
 po = PatchOperator(size(lambda),[M,N]);
 lambda_out = po.val(lambda);
 

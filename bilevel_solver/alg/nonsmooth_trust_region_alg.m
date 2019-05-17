@@ -48,7 +48,7 @@ function [sol,state,param] = nonsmooth_trust_region_initialize(x_0,lower_level_p
     param = add_default(param,'use_lbfgs',false);
     param = add_default(param,'use_sr1',false);
     if param.use_bfgs==false && param.use_lbfgs==false && param.use_sr1==false
-        param = add_default(param,'use_linear',false);
+        param = add_default(param,'use_linear',true);
     end
 
     % Setting the hessian initialization accordingly
@@ -107,7 +107,6 @@ function [sol,state] = nonsmooth_trust_region_algorithm(lower_level_problem,uppe
         step = solve_tr_subproblem(sol(:),state.grad(:),0,state.radius);
     end
     step = reshape(step,size(state.grad));
-    %step = tr_generalized_cauchy(sol,state.grad,state.bfgs,state.radius,cost,param.use_bfgs);
 
     % Quality Indicator calculation
     if param.use_bfgs == true
