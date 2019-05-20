@@ -23,8 +23,8 @@ upper_level_problem.dataset = dataset;
 
 %% Solving the bilevel problem
 bilevel_param.verbose = 2;
-bilevel_param.maxit = 400;
-bilevel_param.tol = 1e-2;
+bilevel_param.maxit = 200;
+bilevel_param.tol = 1e-5;
 bilevel_param.algo = 'NONSMOOTH_TRUST_REGION';
 bilevel_param.radius = 1.0;
 bilevel_param.minradius = 0.1;
@@ -34,7 +34,7 @@ bilevel_param.eta1 = 0.10;
 bilevel_param.eta2 = 0.80;
 
 %lambda = 80.0*triu(ones(M,N))+0.9*tril(ones(M,N)); % Initial guess
-lambda = 2*ones(M,N);
+lambda = 2*rand(M,N);
 [sol,info] = solve_bilevel(lambda,lower_level_problem,upper_level_problem,bilevel_param);
 
 %% Plot Surface
@@ -48,4 +48,4 @@ imagesc_gray(dataset.get_target(1),2,'Original','221');
 imagesc_gray(dataset.get_corrupt(1),2,'Gaussian Noise','222');
 imagesc_gray(info.sol_history(:,:,end),2,'Learned Parameter','223');
 imagesc_gray(info.u_history(:,:,end),2,'ROF Optimal Image Denoising','224');
-imagesc_write(info.u_history(:,:,end),'/Users/dvillacis/OneDrive - Escuela Politécnica Nacional/DOCTORADO/ARTICLES/Bilevel_SD_ROF/plots/sd_parameter.tex'
+imagesc_write(info.u_history(:,:,end),'/Users/dvillacis/OneDrive - Escuela Politécnica Nacional/DOCTORADO/ARTICLES/Bilevel_SD_ROF/plots/sd_parameter.tex');
