@@ -6,12 +6,12 @@ clc;
 dataset = DatasetInFolder('data/circle_dataset','*_circle_original.png','*_circle_noisy.png');
 
 %% Load image
-noisy = dataset.get_corrupt(4);
+noisy = dataset.get_corrupt(1);
 [M,N] = size(noisy);
 
 %% Solver Parameters
 param.verbose = 2;
-param.maxiter = 2000;
+param.maxiter = 5000;
 param.check = 500;
 
 id_op = IdentityOperator([M,N]);

@@ -26,7 +26,7 @@ bilevel_param.eta1 = 0.10;
 bilevel_param.eta2 = 0.80;
 bilevel_param.use_bfgs = true;
 %bilevel_param.use_sr1 = true;
-lambda = 1;
+lambda = 30;
 [optimal_parameter,info] = solve_bilevel(lambda,lower_level_problem,upper_level_problem,bilevel_param);
 
 %% Plotting

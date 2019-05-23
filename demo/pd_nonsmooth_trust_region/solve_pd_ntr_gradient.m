@@ -1,6 +1,6 @@
 function [grad] = solve_pd_ntr_gradient(u,lambda,dataset,params)
-    original = dataset.get_target(4);
-    noisy = dataset.get_corrupt(4);
+    original = dataset.get_target(1);
+    noisy = dataset.get_corrupt(1);
 
     [M,N] = size(noisy);
     po = PatchOperator(size(lambda),[M,N]);
@@ -81,7 +81,8 @@ function [grad] = solve_pd_ntr_gradient(u,lambda,dataset,params)
 
     % Calculating the gradient
     beta = 0.1;
-    grad = po.conj((noisy-u).*reshape(adj,M,N)) + beta * lambda;
+    %grad = po.conj((noisy-u).*reshape(adj,M,N)) + beta * lambda;
+    grad = po.conj(reshape((noisy(:)-u(:)).*adj,M,N)) + beta * lambda;;
 end
 
 function nXi = xi(p,m,n)

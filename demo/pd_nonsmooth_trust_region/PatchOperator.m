@@ -6,6 +6,7 @@ classdef PatchOperator < Operator
         SizeIn
         SizeOut
         KronMatrix
+        M
     end
     
     methods
@@ -15,8 +16,11 @@ classdef PatchOperator < Operator
             obj.SizeIn = size_in;
             obj.SizeOut = size_out;
             %assert(obj.SizeIn < obj.SizeOut);
-            M = obj.SizeOut./obj.SizeIn;
-            obj.KronMatrix = ones(M);
+            obj.M = obj.SizeOut./obj.SizeIn;
+            obj.KronMatrix = ones(obj.M);
+%             N = obj.SizeIn(1);
+%             M = obj.SizeOut(1)/N;
+%             obj.KronMatrix = ones(M,M);
             
         end
         
@@ -28,11 +32,14 @@ classdef PatchOperator < Operator
         end
         
         function res = conj(obj,y)
-            res = y(1:size(obj.KronMatrix,1):end,1:size(obj.KronMatrix,2):end)./obj.KronMatrix(1);
+            %res = y(1:size(obj.KronMatrix,1):end,1:size(obj.KronMatrix,2):end)./obj.KronMatrix(1);
+            %fun = @(block_struct) mean2(block_struct.data);
+            fun = @(block_struct) sum(sum(block_struct.data));
+            res = blockproc(full(y),obj.M,fun);
         end
         
         function x_norm = op_norm(~,x)
-            x_norm = abs(x);
+            x_norm = norm(x);
         end
     end
 end
