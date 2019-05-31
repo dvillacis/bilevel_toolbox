@@ -37,6 +37,7 @@ function [sol,state,param] = nonsmooth_trust_region_initialize(x_0,lower_level_p
     sol = x_0;
     state.sol_history = x_0;
     state.radius = param.radius;
+    state.radiusprev = param.radius;
     state.res = 1;
     state.u_history = lower_level_problem.solve(x_0,upper_level_problem.dataset);
 
@@ -93,10 +94,18 @@ function [sol,state] = nonsmooth_trust_region_algorithm(lower_level_problem,uppe
     end
 
     % Update second order approximation matrix
-    if param.use_bfgs == true
-        state = update_bfgs_approximation(sol,state);
-    elseif param.use_sr1 == true
-        state = update_sr1_approximation(sol,state);
+    if state.radiusprev > param.minradius && state.radius < param.minradius
+        if param.use_bfgs == true || param.use_lbfgs == true
+            state.bfgs = 0.1*speye(size(sol(:),1));
+        elseif param.use_sr1 == true
+            state.sr1 = 0.1*speye(size(sol(:),1));
+        end
+    else
+        if param.use_bfgs == true
+            state = update_bfgs_approximation(sol,state);
+        elseif param.use_sr1 == true
+            state = update_sr1_approximation(sol,state);
+        end
     end
 
     if param.use_bfgs == true
@@ -116,10 +125,14 @@ function [sol,state] = nonsmooth_trust_region_algorithm(lower_level_problem,uppe
     else
         pred = -state.grad(:)'*step(:);
     end
-    next_u = lower_level_problem.solve(sol+step,upper_level_problem.dataset);
-    next_cost = upper_level_problem.eval(next_u,sol+step,upper_level_problem.dataset);
-    ared = cost-next_cost;
-    rho = ared/pred;
+    if pred < 0 || norm(sol(:)+step(:))<1
+        rho = 0;
+    else
+        next_u = lower_level_problem.solve(sol+step,upper_level_problem.dataset);
+        next_cost = upper_level_problem.eval(next_u,sol+step,upper_level_problem.dataset);
+        ared = cost-next_cost;
+        rho = ared/pred;
+    end
 
     if size(sol,1)>1 || size(sol,2)>1
 
@@ -134,6 +147,9 @@ function [sol,state] = nonsmooth_trust_region_algorithm(lower_level_problem,uppe
         fprintf('\n');
     end
 
+    % Record previous radius
+    state.radiusprev = state.radius;
+    
     % Change size of the region
     if rho > param.eta2
         % Record previous step

@@ -33,7 +33,7 @@ function [grad] = solve_pd_ntr_gradient(u,lambda,dataset,params)
         adj = mult(1:N*M);
     else
         % Active, weak active and inactive sets \xi(\nabla^h y)>=1.
-        gamma = 100;
+        gamma = 1000;
         act1=gamma*nKu-1;
         act=spones(max(0,act1(1:M*N)-1/(2*gamma)));
         Act=spdiags(act,0,M*N,M*N);
@@ -78,7 +78,6 @@ function [grad] = solve_pd_ntr_gradient(u,lambda,dataset,params)
         adj=((B*hess22)'+A')\(u(:)-original(:));
 
     end
-
     % Calculating the gradient
     beta = 0.1;
     %grad = po.conj((noisy-u).*reshape(adj,M,N)) + beta * lambda;

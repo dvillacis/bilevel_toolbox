@@ -2,7 +2,7 @@
 This is a MATLAB Toolbox designed to test different bilevel optimization problems of the form $ \min_u J(y,u)$
 
 ## Installation
-To use the toolbox, please execute the script `init_bilevel_toolbox.m` to place all the required scripts into the MATLAB path.
+To use the toolbox, please execute the MATLAB command `run('<path_to_bilevel_toolbox>/init_bilevel_toolbox.m')` to place all the required scripts into the MATLAB path.
 
 ## Dataset
 We will use this bilevel optimization techniques in the context of machine learning. In this scenario we use *training data* to define an upper level cost function. In order to provide a helpful interface to this training data, a Dataset class was build and can be instantiated as follows
