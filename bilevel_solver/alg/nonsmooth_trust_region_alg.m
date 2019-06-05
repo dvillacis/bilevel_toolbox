@@ -58,8 +58,8 @@ function [sol,state,param] = nonsmooth_trust_region_initialize(x_0,lower_level_p
     elseif param.use_sr1 == true
         state.sr1 = 0.1*speye(size(x_0(:),1));
     else
-      state.bfgs = zeros(size(x_0(:),1)); % Use first order model
-      state.sr1 = zeros(size(x_0(:),1));
+      state.bfgs = sparse(size(x_0(:),1)); % Use first order model
+      state.sr1 = sparse(size(x_0(:),1));
     end
 
 end
@@ -198,13 +198,13 @@ function [step,directions] = solve_tr_subproblem(sol,grad,Bk,radius)
     n = length(sol);
     errtol = 1e-4;
     maxiters = 1000;
-    step = zeros(n,1);
+    step = sparse(n,1);
     r = -grad-Bk*step;
     rho = r'*r;
     tst = norm(r);
     terminate = errtol*norm(grad);
     it = 1;
-    directions = zeros(n,1);
+    directions = sparse(n,1);
     hatdel = radius*(1-1.d-6);
     while((tst>terminate) && (it <= maxiters) && norm(step) <= hatdel)
         if(it==1)
