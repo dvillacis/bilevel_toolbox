@@ -13,6 +13,26 @@ upper_level_problem.eval = @(u,lambda,dataset) eval_ntr_upper_level(u,lambda,dat
 upper_level_problem.gradient = @(u,lambda,dataset,params) solve_ntr_gradient(u,lambda,dataset,params);
 upper_level_problem.dataset = dataset;
 
+%% Plotting cost function
+costs = [];
+for l = 2:0.1:10
+    u = lower_level_problem.solve(l,dataset);
+    c = upper_level_problem.eval(u,l,dataset);
+    costs = [costs c];
+    fprintf("%f, %f\n",l,c)
+end
+
+%% Plotting gradient
+grads = [];
+param.regularized_model = false;
+for l = 2:0.1:10
+    u = lower_level_problem.solve(l,dataset);
+    g = upper_level_problem.gradient(u,l,dataset,param);
+    grads = [grads g];
+    fprintf("%f, %f\n",l,g)
+end
+plot(2:0.1:10,grads)
+
 %% Solving the bilevel problem
 bilevel_param.verbose = 2;
 bilevel_param.maxit = 100;
